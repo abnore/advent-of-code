@@ -1,12 +1,12 @@
-# AoC 2025
+# $${\Huge \color{gold}Advent\ of\ Code\ 2025}$$
 
 ## results
 
-- 1  $${\color{gold}★★}$$
-- 2  $${\color{gold}★★}$$
-- 3  $${\color{gold}★★}$$
-- 4  $${\color{gold}★★}$$
-- 5
+- 1  $${\Large \color{gold}★★}$$
+- 2  $${\Large \color{gold}★★}$$
+- 3  $${\Large \color{gold}★★}$$
+- 4  $${\Large \color{gold}★★}$$
+- 5 
 - 6
 - 7
 - 8
@@ -14,3 +14,7 @@
 - 10
 - 11
 - 12
+
+<!--
+
+-->
