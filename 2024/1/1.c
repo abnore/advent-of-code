@@ -8,7 +8,7 @@ int compare(const void* a, const void* b) {
 
 int main()
 {
-        FILE *fp=fopen("1.in", "r");
+        FILE *fp=fopen("input.in", "r");
         int n = 1000;
         int l_list[n];
         int r_list[n];

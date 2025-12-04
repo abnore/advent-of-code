@@ -58,7 +58,7 @@ bool is_safe_with_removal(int levels[], int count) {
 }
 
 int main() {
-    FILE *fp = fopen("2.in", "r");
+    FILE *fp = fopen("input.in", "r");
     if (fp == NULL) {
         perror("Error opening file");
         return EXIT_FAILURE;

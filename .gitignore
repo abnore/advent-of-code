@@ -1,0 +1,8 @@
+# Binaries
+main
+*.o
+*.out
+*.bin
+
+# Advent of Code specifics
+input.in

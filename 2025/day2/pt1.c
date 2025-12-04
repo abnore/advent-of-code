@@ -16,8 +16,10 @@ static int split_into_ranges(char* str, range* ranges)
 {
     char* ptr = str;
     int amount= 1;
-    while(*(ptr++) != EOF){
-        if(*ptr == ',') amount++;
+    while (*ptr != '\0') {
+        if (*ptr == ',')
+            amount++;
+        ptr++;
     }
     INFO("We found %i ranges", amount);
 

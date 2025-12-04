@@ -6,7 +6,7 @@ mul(xxx,xxx)
 
 int main()
 {
-        FILE *fp=fopen("3.in", "r");
+        FILE *fp=fopen("input.in", "r");
 
         char buf[1024];
         char ch;
