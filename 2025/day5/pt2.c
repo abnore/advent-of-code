@@ -18,12 +18,12 @@
 * Need to check uniqueness differently. Can only check the ranges end points.
 * New range has to fit between, otherwise i have to remove the number, and check again
 * This way its O(n^2) instead - or close too it
+* - i need to merge. Maybe merge sort?
 */
 
 int pt2(FILE* fp){
 
     range ranges[256];
-    range missing_ranges[256];
     int num_ranges=0;
 
     // This is how getline does it - mallocs a line (if not already malloc'd)
@@ -35,7 +35,7 @@ int pt2(FILE* fp){
     int idx1=0;
     int idx2=0;
 
-    while((ret = getline(&line, &linecapp, fp))!=1){
+    while((ret = getline(&line, &linecapp, fp))>1){
         char num1[64];
         char num2[64];
         if(line[ret-1]=='\n') ret--; //remove the \n for now
@@ -75,51 +75,81 @@ int pt2(FILE* fp){
     * Keep lowest and highest 0 and 0 at first then increase? Then i will need
     * to keep track of holes. So i will need missing ranges and highest....
     */
-
     /*
-    * 3-5,  lowest 3 - and 5 highest
-    * 10-14 lowest 3 and missing range 6-9 and 14 highest
-    * 16-20 lowest 3 and missing range 6-9, 15, and 20 highest.
-    * 12-18 lowest 3 and missing range 6-9, and 20 highest
-    * So they check could be, does it contain any of the missing range? If so,
-    * fill out the number and set highest....
-    * 1) Is the lowest lower then the lowest?
-    * 2) Is the highest higher then the highest?
-    * 3) If yes to both - then this range is bigger then everything we have,
-    *       extend low and high, done!
-    *    if lowest then lowest, but not higher then higher, we overlap - check if cover
-    *    missing range.
-    *    if not lower then lowest, but higher then highest, check if lowest
-    *    is higher then highest - if not we overlap - remove numbers! - otherwise we need
-    *    to extend missing range
-    * If no to either of these questions we are inside what we already have and
-    * must fill missing range And we CANT have more missing ranges then ranges,
-    * because even if perfecntly spread out its n-1 missing ranges. X-X-X, as
-    *   X is what we have, - is between
+    * Too time consuming to keep track manually and check - its cumbersome, and
+    * I am missing a more elgant solution. The ranges, should be possible to merge
+    * But in that case i would need to sort them, and if they overlap right next to
+    * eachother i can just turn them into one range. I will need a sorting function
+    * Then a dynamic array perhaps.
     */
 
-    uint64_t lowest=ranges[0].start; // has to be a starting point, 0 is always low
-    uint64_t highest=0;
-    /*range missing_ranges*/
-    int num_missing_ranges=0;
+    /*   0 1 2 3
+        |i| | | |
+        | |j| | |  -After this, the smallest is 0
 
-    for(int i=0; i<num_ranges;++i)
-    {
-        // Should check if the range is filling out some missing ranges perhaps
-        // 1) new range - check if lowest is bottom, or above the previous ranges
-        if(ranges[i].start < lowest) {
-            lowest=ranges[i].start;
-        } else if(ranges[i].start > highest {
-            missing_ranges[i].end = ranges[i].start-1; // Missing range is up to this num-1
-            missing_ranges[i].start = highest+1; // There cant be anything else in this space
+        | |i| | |
+        | | |j| |
+*/
+    range sorted_ranges[264];
+
+    uint64_t temp_start;
+    uint64_t temp_end;
+    for(int i=0; i<num_ranges-1;++i){
+        DEBUG("i - ranges[%i].start is %llu",i, ranges[i].start);
+        for(int j=i+1;j<num_ranges;++j){
+            DEBUG("j - ranges[%i].start is %llu",j, ranges[j].start);
+            if(ranges[j].start < ranges[i].start)
+            {
+                temp_start  = ranges[i].start;
+                temp_end    = ranges[i].end;
+                ranges[i].start = ranges[j].start;
+                ranges[i].end = ranges[j].end;
+                ranges[j].start = temp_start;
+                ranges[j].end = temp_end;
+            }
         }
-        if(ranges[i].end > highest) {
-            highest=ranges[i].end;
-        }
-        // THIS IS INCOMPLETE - WIP!!
     }
 
+    /*
+        start 3    end 5
+        start 10   end 20
+        start 23   end 40   merged
+       (start 16   end 20)
+       (start 23   end 40)
+        start 28   end 38      i
 
+*/
+// Just edit in place to make counting easier - no overlaps. 3-5 and 5-7 is
+// 3-4, 5-7 now
+    uint64_t total_sum = 0;
+    int merged = 0;
+    for(int i=1; i<num_ranges;++i) // Full pass through the ranges
+    {
+        DEBUG("ranges[merged] (%llu-%llu) -- ranges[i] (%llu-%llu)", ranges[merged].start, ranges[merged].end, ranges[i].start, ranges[i].end);
+
+        if(ranges[merged].end >= ranges[i].start)
+        {
+            if(ranges[merged].end >= ranges[i].end)
+            {
+                DEBUG("This range is completly inside the previous");
+            } else {
+                ranges[merged].end = ranges[i].end;
+            }
+        } else {
+            merged++;
+            ranges[merged].start = ranges[i].start;
+            ranges[merged].end = ranges[i].end;
+        }
+        DEBUG("Total merged is %i", merged);
+    }
+
+    for(int i=0; i<=merged;++i)
+    {
+        DEBUG("Ranges[%i]: start %llu   end %llu", i, ranges[i].start, ranges[i].end);
+        total_sum += ranges[i].end - ranges[i].start + 1;
+    }
+
+    INFO("Total sum is %llu", total_sum);
 
     return 0;
 }
