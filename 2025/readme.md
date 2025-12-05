@@ -19,7 +19,7 @@ Each day has:
 | 2 | $${\Large \color{gold}★★}$$ |
 | 3 | $${\Large \color{gold}★★}$$ |
 | 4 | $${\Large \color{gold}★★}$$ |
-| 5 |  |
+| 5 | $${\Large \color{gold}★★}$$ |
 | 6 |  |
 | 7 |  |
 | 8 |  |
