@@ -1,3 +1,7 @@
+# Gathering notes
+Just gathering notes for the remaining week, so i dont have to man-page everything,
+and reminding me that these functions exist so I dont have to reinvent the wheel (sorting algorithm)
+
 ## Common `sscanf` Patterns
 
 ### Structured input
@@ -37,23 +41,8 @@ sscanf("123xyz", "%d%n", &value, &n);  // n = 3
 ### `getline()` – read full line (auto-grows buffer)
 ```c
 char *line = NULL;  // getline allocates when line==NULL
-size_t cap = 0;
+size_t cap = 0;     // capacity for line (how much allocated)
 getline(&line, &cap, fp);
-```
-
-### `strchr()` – find a character
-```c
-char *p = strchr(line, '-');
-```
-
-### `strstr()` – find substring
-```c
-if (strstr(line, "foo")) { ... }
-```
-
-### `strtol()` / `strtoll()` – safe integer parsing
-```c
-long long v = strtoll(tok, NULL, 10);
 ```
 
 ---
@@ -75,6 +64,10 @@ qsort(arr, n, sizeof(arr[0]), cmp);
 ## Minimal File Helpers
 
 ### Read whole file into a buffer
+`fseek`, `rewind` are useful - especially for pt1 and pt2.
+`ftell` gives current cursor pos (after `fseek` this equals size in bytes),
+`fread` loads everything into memory.
+
 ```c
 char *read_file(const char *path) {
     FILE *fp = fopen(path, "rb");
@@ -87,6 +80,7 @@ char *read_file(const char *path) {
     char *buf = malloc(sz + 1);
     fread(buf, 1, sz, fp);
     buf[sz] = '\0';
+
     fclose(fp);
     return buf; // free() later
 }
@@ -122,18 +116,10 @@ bigbuf[pos] = '\0';
 
 ---
 
-### Get one line without `getline()`
-```c
-char buf[4096];
-fgets(buf, sizeof(buf), fp);
-```
-
----
-
 ### Quick tokenize helper
 ```c
 char tmp[256];
-strcpy(tmp, line);
+strcpy(tmp, line); // Never call strtok on original string if you still need it! Modifies it!
 
 for (char *t = strtok(tmp, ","); t; t = strtok(NULL, ",")) {
     // use t
