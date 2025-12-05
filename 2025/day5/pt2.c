@@ -4,7 +4,7 @@
 #include <stdlib.h> //  free()
 
 /*
-* Part 2 should be easy - i have constructed the ranges, and now i can
+* Part 2 should be easy (edit: it was not)- i have constructed the ranges, and now i can
 * just go through each range, in a loop where i=range.start and goes until
 * i< range.end and then count how many numbers there are.
 * I already stored how many ranges i have!
