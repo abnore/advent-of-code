@@ -15,6 +15,8 @@
 *
 * PLAN: Create a stack, and for every number, check if it is in the stack
 * NEW PLAN!: - brute force doesn't work, O(n^3) got too big.
+* First range is 5,513,712,084,434 numbers... And going 3 loops deep on that, no way
+*
 * Need to check uniqueness differently. Can only check the ranges end points.
 * New range has to fit between, otherwise i have to remove the number, and check again
 * This way its O(n^2) instead - or close too it
@@ -66,7 +68,6 @@ int pt2(FILE* fp){
         idx1=0;
         idx2=0;
     }
-    // And now we have all the numbers in a csv buffer - now let us compare
     INFO("Parsed all the ranges. number of ranges is %i", num_ranges);
     free(line);
 
@@ -92,6 +93,7 @@ int pt2(FILE* fp){
 */
     range sorted_ranges[264];
 
+    // Ended up with a bubble / selection sort type of algorithm to simplify merging
     uint64_t temp_start;
     uint64_t temp_end;
     for(int i=0; i<num_ranges-1;++i){
@@ -111,16 +113,18 @@ int pt2(FILE* fp){
     }
 
     /*
-        start 3    end 5
-        start 10   end 20
-        start 23   end 40   merged
-       (start 16   end 20)
-       (start 23   end 40)
-        start 28   end 38      i
+NOTES: Just walking through an example,
+index| start         end         index (moving down)
+  0  |   3            5             merged=0       (i=1)   First range - nothing
+  1  |  10    (14)(18)20            merged=1       (i=2) Is 14 >= then 12? new->18
+  2  | (12)23        (18)40         merged=1       (i=3) is 18 >= 16 = new -> 20
+  3  | (16)          (20)           merged=1       (i=4) is 20 >= 23? no - merged moves, overwrites where i was
+  4  | (23)          (40)           merged=2       (i=5) is 40 >= 28? yeah - but 40 > 38 so its absorbed
+  5  | (28)          (38)           merged=2       (i=6)  - etc
 
-*/
-// Just edit in place to make counting easier - no overlaps. 3-5 and 5-7 is
-// 3-4, 5-7 now
+    */
+
+    // Just merging ranges in one pass
     uint64_t total_sum = 0;
     int merged = 0;
     for(int i=1; i<num_ranges;++i) // Full pass through the ranges
@@ -131,19 +135,25 @@ int pt2(FILE* fp){
         {
             if(ranges[merged].end >= ranges[i].end)
             {
+                // Do nothing here - we leave it and overwrite it
                 DEBUG("This range is completly inside the previous");
             } else {
                 ranges[merged].end = ranges[i].end;
             }
         } else {
+            // whenever we move merged we need to insert the current i,
+            // overwriting whatever range it currently is at. Merged is therefore
+            // accumulating the ranges.
             merged++;
             ranges[merged].start = ranges[i].start;
             ranges[merged].end = ranges[i].end;
         }
         DEBUG("Total merged is %i", merged);
     }
+    merged++; // One last increment to count the last one
 
-    for(int i=0; i<=merged;++i)
+    // And summing it up at the end - total number is just the difference+1 (inclusive)
+    for(int i=0; i<merged;++i)
     {
         DEBUG("Ranges[%i]: start %llu   end %llu", i, ranges[i].start, ranges[i].end);
         total_sum += ranges[i].end - ranges[i].start + 1;
