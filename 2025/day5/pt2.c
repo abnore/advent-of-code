@@ -20,10 +20,10 @@
 * This way its O(n^2) instead - or close too it
 */
 
-
 int pt2(FILE* fp){
 
     range ranges[256];
+    range missing_ranges[256];
     int num_ranges=0;
 
     // This is how getline does it - mallocs a line (if not already malloc'd)
@@ -42,8 +42,6 @@ int pt2(FILE* fp){
 
         int first=0;
         for(int i=0;i<ret;++i){
-            //if(line[ret-1]=='\n') line[ret-1]=','; // Comma seperated in buffer
-            //range[y++]=line[i];
             if(line[i]=='-') {
                 first=1;
                 continue;
@@ -54,12 +52,11 @@ int pt2(FILE* fp){
                 idx1++;
             } else if(first==1){
                 num2[idx2]=line[i];
-                DEBUG("line[i] is %c num1[y] is %c", line[i], num1[idx2]);
+                DEBUG("line[i] is %c num1[y] is %c", line[i], num2[idx2]);
                 idx2++;
             } else {
-                ERROR("WTF");
+                ASSERT(0, "unreachable - WTF");
             }
-
         }
         num1[idx1] = '\0';
         num2[idx2] = '\0';
@@ -69,52 +66,60 @@ int pt2(FILE* fp){
         idx1=0;
         idx2=0;
     }
-    // only for test.in
-//    ASSERT(ranges[0].start == 3, "should be 3, is %llu", ranges[0].start);
-//    ASSERT(ranges[0].end == 5, "should be 5, is %llu", ranges[0].start);
-//    ASSERT(ranges[2].start == 16, "should be 10, is %llu", ranges[2].start);
-//    ASSERT(ranges[2].end == 20, "should be 14, is %llu", ranges[2].start);
-
-    // Now we have the ranges in a csv buffer
-    //range[total-1]='\0'; // overwrite the last comma
-
     // And now we have all the numbers in a csv buffer - now let us compare
-    INFO("Parsed all the ranges, and all the IDS. Ready to check");
-    INFO("number of ranges is %i", num_ranges);
+    INFO("Parsed all the ranges. number of ranges is %i", num_ranges);
+    free(line);
 
-    /* PSEUDO-CODE
-    for each num in each range
-        while not in stack, add to stack
-        if in stack, ignore
-
-        return amount in stack
+    /*
+    * Maybe just keep score over the missing ranges?
+    * Keep lowest and highest 0 and 0 at first then increase? Then i will need
+    * to keep track of holes. So i will need missing ranges and highest....
     */
 
-    uint64_t stack[4096];
-    int total_num_ids=0;
-    int num_in_stack=0;
+    /*
+    * 3-5,  lowest 3 - and 5 highest
+    * 10-14 lowest 3 and missing range 6-9 and 14 highest
+    * 16-20 lowest 3 and missing range 6-9, 15, and 20 highest.
+    * 12-18 lowest 3 and missing range 6-9, and 20 highest
+    * So they check could be, does it contain any of the missing range? If so,
+    * fill out the number and set highest....
+    * 1) Is the lowest lower then the lowest?
+    * 2) Is the highest higher then the highest?
+    * 3) If yes to both - then this range is bigger then everything we have,
+    *       extend low and high, done!
+    *    if lowest then lowest, but not higher then higher, we overlap - check if cover
+    *    missing range.
+    *    if not lower then lowest, but higher then highest, check if lowest
+    *    is higher then highest - if not we overlap - remove numbers! - otherwise we need
+    *    to extend missing range
+    * If no to either of these questions we are inside what we already have and
+    * must fill missing range And we CANT have more missing ranges then ranges,
+    * because even if perfecntly spread out its n-1 missing ranges. X-X-X, as
+    *   X is what we have, - is between
+    */
 
-//    for(int i=0; i<num_ranges;++i) // for every range
-//    {
-//        DEBUG("num_ranges %i, i=%i", num_ranges, i);
-//        for(uint64_t c=ranges[i].start;c<=ranges[i].end;++c) // for num in range
-//        {
-//            DEBUG("%i range - num is %llu", i, c);
-//            stack[num_in_stack++]=c;
-//            total_num_ids++;
-//            for(int s=0;s<total_num_ids;++s){ // for every num in stack except newly added
-//                // starts empty - but then it checks a num
-//                if(num_in_stack > 0 && c==stack[s-1]) {
-//                    DEBUG("%llu in stack! skipping", c);
-//                    num_in_stack--;
-//                    break;
-//                }
-//                DEBUG("stack[%i]=%llu", s, stack[s]);
-//            }
-//        }
-//    }
-//    INFO("total num in stack %i", num_in_stack);
-//    INFO("There should be %i of IDs", total_num_ids);
-    free(line);
+    uint64_t lowest=ranges[0].start; // has to be a starting point, 0 is always low
+    uint64_t highest=0;
+    /*range missing_ranges*/
+    int num_missing_ranges=0;
+
+    for(int i=0; i<num_ranges;++i)
+    {
+        // Should check if the range is filling out some missing ranges perhaps
+        // 1) new range - check if lowest is bottom, or above the previous ranges
+        if(ranges[i].start < lowest) {
+            lowest=ranges[i].start;
+        } else if(ranges[i].start > highest {
+            missing_ranges[i].end = ranges[i].start-1; // Missing range is up to this num-1
+            missing_ranges[i].start = highest+1; // There cant be anything else in this space
+        }
+        if(ranges[i].end > highest) {
+            highest=ranges[i].end;
+        }
+        // THIS IS INCOMPLETE - WIP!!
+    }
+
+
+
     return 0;
 }
