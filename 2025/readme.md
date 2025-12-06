@@ -20,7 +20,7 @@ Each day has:
 | 3 | $${\Large \color{gold}★★}$$ |
 | 4 | $${\Large \color{gold}★★}$$ |
 | 5 | $${\Large \color{gold}★★}$$ |
-| 6 |  |
+| 6 | $${\Large \color{gold}★★}$$ |
 | 7 |  |
 | 8 |  |
 | 9 |  |
