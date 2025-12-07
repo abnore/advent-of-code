@@ -6,10 +6,7 @@
 
 int pt2(FILE* fp){
 
-    uint64_t *curr=NULL;
-    uint64_t *next=NULL;
-    uint64_t time_lines=0;
-
+    uint64_t *curr=NULL, *next=NULL, time_lines=0;
     int cols = 0; // since line_len becomes -1 at the end, we store the length
     int S = 0;    // index for the S which begins the beams, and check for first line
 
@@ -76,4 +73,42 @@ int pt2(FILE* fp){
 
     return 0;
 }
+/*
+int pt2(FILE* fp){
+    char *line = NULL;          
+    size_t cap = 0;            
+    ssize_t line_len=0;
 
+    uint64_t *curr=NULL, *next=NULL, time_lines=0;
+    int cols=0, S=0;
+
+    while((line_len = getline(&line, &cap, fp)) > 0) {
+        if(line[line_len-1]=='\n') line[--line_len]='\0';
+        cols = (int)line_len;
+        
+        if(S==0) {
+            curr = calloc(cols, sizeof(uint64_t)); // So we can 0-init them
+            next = calloc(cols, sizeof(uint64_t));
+
+            while((line[S])!='S') S++; 
+            curr[S] = 1; 
+            continue; 
+        } 
+        for(int i=0; i<cols;++i){
+            if(curr[i] == 0) continue; 
+            if(line[i] == '.') next[i] += curr[i]; 
+            if(line[i] == '^'){
+                next[i-1] += curr[i]; 
+                next[i+1] += curr[i];
+            }
+        }
+        memcpy(curr, next, cols*sizeof curr);
+        bzero(next, cols*sizeof next);
+    } 
+
+    for(int i=0; i<cols; time_lines += curr[i++]);
+
+    INFO("Amount of time_lines is %llu",time_lines);
+    return 0;
+}
+*/
