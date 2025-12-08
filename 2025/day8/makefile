@@ -15,6 +15,7 @@ $(BIN): $(SRC)
 	@echo " - make run"
 	@echo " - make run-debug"
 	@echo " - make run-all"
+	@echo " - make run-none"
 
 run: $(BIN)
 	@LOG_LEVELS="$(LOG_LEVELS)" ./$(BIN) $(ARGS)
@@ -24,6 +25,9 @@ run-debug:   ; @$(MAKE) run LOG_LEVELS=-trace
 
 # Show everything
 run-all:   ; @$(MAKE) run LOG_LEVELS=ALL
+
+# Show nothing
+run-none:   ; @$(MAKE) run LOG_LEVELS=NONE
 
 clean:
 	@echo "Cleaning up/"

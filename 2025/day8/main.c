@@ -1,5 +1,6 @@
 #include <blackbox.h>
 #include "main.h"
+#include <math.h>
 
 int main(int argc, char** argv)
 {
