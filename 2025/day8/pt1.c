@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-/* Returns distance in an int between j1 and j2 */
+/* returns squared distance between j1 and j2 (uint64_t) */
 static inline uint64_t check_distance(Jbox j1, Jbox j2){
     int64_t a, b, c;
     a = (int64_t)j1.x-(int64_t)j2.x;
@@ -25,7 +25,8 @@ static int cmp_size(const void *a,const void *b) {
     return y-x;
 }
 
-/* I chose a simple recursive find function to return the root parent (first box) */
+/* I chose a simple recursive find function to return the root of the set this
+ * index belongs to, from the DSU article */
 static int find(int *parent, int index){
     TRACE("parent[%i]=%i", index, parent[index]);
     if(parent[index] == index) 
@@ -33,6 +34,8 @@ static int find(int *parent, int index){
     return find(parent, parent[index]);
 }
 
+/* From the DSU article. I check sizes first, so the smaller tree gets attached
+ * under the larger one. This keeps things from becoming lopsided. */
 static void union_sets(int *parent, int *size, int a, int b) {
     a = find(parent, a);
     b = find(parent, b);
@@ -46,23 +49,20 @@ static void union_sets(int *parent, int *size, int a, int b) {
         }
     }
 }
-/* I enterprete this problem as how many closed loops there are. 
+/* I originally tried to solve this by making each box point to its closest box
+ * and detecting loops that way. I tried linked lists, and even wondered about
+ * AVL trees etc. It got messy fast, and I dropped it. The code now uses DSU
+ * instead, which is much cleaner for tracking connected sets.
  * 
- * I will read in the file line by line and dynamically allocate space for the
- * boxes. I will begin at the top, and will need to store a pointer to its
- * closest box. They way i will do this is with a linked list and have a list
- * of distances. They closest box will be the next pointer. When the next for a
- * node is pointing to the start of the list, we have a loop. There are
- * probably better ways of doing this, e.g. AVL trees This is easier to reason
- * about. For the test its only 190 possible distances In the real input (of
- * 1000 lines) there are 499,5k distances. Possible to loop over. N(N-1)/2
- * unique distances
+ * For the test its only 190 possible distances In the real input (of
+ * 1000 lines) there are 499,5k distances. No problem to loop over. N(N-1)/2
+ * unique distances. 
  *
- * The data structure i went for is Disjoint Set Union or DSU 
+ * Found an article of Disjoint Set Union or DSU:
  * https://cp-algorithms.com/data_structures/disjoint_set_union.html
  *
- * I cant think of another way to do this without increasing the complexity 
- * to unnecessary levels. I will need a find and union functions
+ * I couldn't think of another way to do this without increasing the complexity 
+ * to unnecessary levels. I will need a find and union functions - written above
  */
 
 int pt1(FILE* fp){
@@ -103,8 +103,6 @@ int pt1(FILE* fp){
             uint64_t dist = check_distance((boxes[i]), (boxes[ii]));
             Pair *p = &pairs[num_pairs++]; 
             p->dist = dist;
-            p->a = &boxes[i];
-            p->b = &boxes[ii];
             p->ia = i;
             p->ib = ii;
             TRACE("Distance %3i box[%2i] and box[%2i] is %llu",num_pairs, i, ii, dist);
@@ -133,7 +131,7 @@ int pt1(FILE* fp){
     int size[count];      // And i will keep track of the sizes here
 
     for(int i=0; i<count; ++i) {
-        first_box[i] = i;   // every box is itselves root
+        first_box[i] = i;   // every box starts as its own root
         size[i] = 1;     // each box starts in its own group
     }
 
@@ -145,7 +143,11 @@ int pt1(FILE* fp){
      * together the sizes of the three largest circuits (5, 4, and one of the
      * circuits of size 2) produces 40.
      */
-    int LIMIT = 1000; // so i know if the test cases is correct
+    // Limit so i know if the test cases is correct (10 for test, 1000 for real)
+    int LIMIT;
+    if(count==20) LIMIT = 10; // test case
+    else LIMIT = 1000; // real input
+
     for (int i = 0; i < LIMIT; ++i) {
         int a = pairs[i].ia;   // index of Jbox A
         int b = pairs[i].ib;   // index of Jbox B
@@ -183,10 +185,11 @@ int pt1(FILE* fp){
         result *= groups[i];
     }
 
-    INFO("Results of 3 highest is %llu", result);
+    INFO("PART 1 answer = %llu", result);
 
     free(groups);
     free(pairs);
     free(boxes);
+
     return 0;
 }
