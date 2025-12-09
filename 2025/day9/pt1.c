@@ -9,7 +9,7 @@ int pt1(FILE* fp){
     fseek(fp, 0, SEEK_END);
     int len = ftell(fp);
     rewind(fp);
-
+    INFO("file is %d bytes", len);
     char *line = NULL;
     size_t cap = 0;
     Vec2 *tiles = malloc(len*sizeof(int)); // this is overkill but fuck it
@@ -17,7 +17,7 @@ int pt1(FILE* fp){
 
     while(getline(&line,&cap,fp) > 0){
         sscanf(line,"%llu,%llu",&tiles[num_tiles].x, &tiles[num_tiles].y);
-        DEBUG("Read a line with %d,%d", tiles[num_tiles].x, tiles[num_tiles].y);
+        DEBUG("Read a line with %llu,%llu", tiles[num_tiles].x, tiles[num_tiles].y);
         num_tiles++;
     }
 
@@ -35,7 +35,7 @@ int pt1(FILE* fp){
             int64_t x_2 = tiles[ii].x;
             int64_t y_2 = tiles[ii].y;
            
-            TRACE("x_1=%i x_2=%i y_1=%i y_2=%i",x_1, x_2, y_1,y_2);
+            TRACE("x_1=%llu x_2=%llu y_1=%llu y_2=%llu",x_1, x_2, y_1,y_2);
             // (x_1-x_2+1)*(y_1-y_2+1);
 
             uint64_t distx=llabs((x_2-x_1));
