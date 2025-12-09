@@ -122,12 +122,14 @@ int pt2(FILE* fp){
     int tiles_idx=0;
     int rel_pos;
 
+    /* Looping over the non sorted list, which is in order */
     for(int i=0; i<num_tiles; i++){
         int cur_x = tiles[i].x; 
         int cur_y = tiles[i].y; 
         int next_x=tiles[(i+1)==num_tiles?0:i+1].x;
         int next_y=tiles[(i+1)==num_tiles?0:i+1].y;
 
+        /* And when having a difference, fill in between them */
         INFO("cur x:%i y:%i, next x:%i y:%i", cur_x, cur_y, next_x, next_y);
         while(cur_x!=next_x)
         {
@@ -162,20 +164,37 @@ int pt2(FILE* fp){
     for(int col=0; col<height; col++){
         for(int row=0; row<width; row++){
             int rel_pos = col*width+row;
+            int rel_edge = col*width+(width-1);
             char c = grid[rel_pos];
+            char cn = grid[rel_pos==rel_edge?rel_edge:rel_pos+1];
 
-            if(c=='#') break;
-            if(c=='X' && !inside) {
-                inside=1;
-                continue;
+            /* There are 3 cases - either a #X, #. X. - that all are inside
+             * What determines that, is the rest of the row. */
+
+            if(c=='#'){ // If the next is X we are on a wall
+                if(cn=='X'){
+                    continue;
+                } else if(cn=='.'){ // check the rest of the row, only way 
+                    for(int i=rel_pos; i<rel_edge;++i) {
+                        if(grid[i]=='X'){ // At ANY point we are inside!
+                            inside=1;
+                            break;
+                        }
+                    }
+                    // If we reach here and didnt break we are outside
+                    continue;
+                }
             }
-            if(inside) {
-//                if(grid[rel_pos] != '#')
-                if(c=='.')
-                    grid[rel_pos]='X';
-                else if(c=='X') inside=0;
-                INFO("inside! pos %i", rel_pos);
+            if(c=='X'){ // Either X. , X# or XX
+                if(cn=='X'){ // We are on the wall, continue next
+                    continue;
+                } else if(cn=='.'){ // This can happend two times, so we toggle!
+                    inside=!inside;
+                    continue;
+                }
             }
+            /* If we make it here we draw in based on if we are inside or not! */
+           if(inside) grid[rel_pos]='X'; 
         }
     }
 
