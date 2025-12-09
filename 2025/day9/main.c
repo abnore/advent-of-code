@@ -18,7 +18,7 @@ int main(int argc, char** argv)
 
     pt1(fp);
     fseek(fp, 0, SEEK_SET);
-    pt2(fp);
+    pt2_no_raster(fp);
 
     fclose(fp);
     shutdown_log();

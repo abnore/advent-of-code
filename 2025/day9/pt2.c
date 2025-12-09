@@ -74,8 +74,11 @@ int pt2(FILE* fp){
     }
     tiles = realloc(tiles, num_tiles*sizeof(Vec2));
 
+    width+= 3; height+=2;
+    DEBUG("Biggest x is %i, y is %i after +3 to width, +2 to height", width, height);
     /* Allocating for the grid and for sorting so i can draw easy */
-    char *grid = malloc(len*sizeof(char));
+    size_t grid_size = (size_t)width * (size_t)height;
+    char *grid = malloc(grid_size);
     Vec2 *draw_tiles = malloc(num_tiles*sizeof(Vec2));
     memcpy(draw_tiles, tiles, num_tiles*sizeof(Vec2));
 
@@ -84,8 +87,6 @@ int pt2(FILE* fp){
     qsort(draw_tiles, (size_t)num_tiles, sizeof(Vec2), comp_tiles);
 
     /* I will construct the grid and print it */
-    width+= 3; height+=2;
-    DEBUG("Biggest x is %i, y is %i after +3 to width, +2 to height", width, height);
 
     int64_t x_1, y_1;
     int64_t x_2, y_2;
@@ -104,7 +105,7 @@ int pt2(FILE* fp){
         int row = (int)t.x;
         int col = (int)t.y;
         int rel_pos = col*width+row;
-        INFO("tile[%i] x:%llu y:%llu rel_pos: %i", i, t.x, t.y, rel_pos  );
+        DEBUG("tile[%i] x:%llu y:%llu rel_pos: %i", i, t.x, t.y, rel_pos  );
 
         grid[rel_pos] = '#';
     }
@@ -130,7 +131,7 @@ int pt2(FILE* fp){
         int next_y=tiles[(i+1)==num_tiles?0:i+1].y;
 
         /* And when having a difference, fill in between them */
-        INFO("cur x:%i y:%i, next x:%i y:%i", cur_x, cur_y, next_x, next_y);
+        DEBUG("cur x:%i y:%i, next x:%i y:%i", cur_x, cur_y, next_x, next_y);
         while(cur_x!=next_x)
         {
             if(cur_x < next_x)
@@ -157,7 +158,6 @@ int pt2(FILE* fp){
         }
     }
 
-    print_grid(width,height,grid);
 
     /* Now we loop over the entire grid, and fill out the rest */
     int inside=0;
@@ -200,8 +200,61 @@ int pt2(FILE* fp){
 
     print_grid(width,height,grid);
 
+    /* At this point i now have a grid boxed in with red corner tiles, filled with 
+     * green. If i now reuse the pt1 boxes i can do a check for if the biggest one
+     * contains all green or red points */
 
+    /* Read every tile in, now we calculate all the areas and print the biggest */
+    uint64_t biggest_area=0;
+    for(int i=0;i<num_tiles-1;++i)
+    {
+        int64_t x_1 = (int64_t)tiles[i].x;
+        int64_t y_1 = (int64_t)tiles[i].y;
+        for(int ii=i+1;ii<num_tiles;++ii)
+        {
+            int64_t x_2 = tiles[ii].x;
+            int64_t y_2 = tiles[ii].y;
+            if(x_1 == x_2) continue; // No points in doing the lines.. **MAYBE BUG** 
+            if(y_1 == y_2) continue; // No points in doing the lines.. **MAYBE BUG** 
+            
+            TRACE("x_1=%llu x_2=%llu y_1=%llu y_2=%llu",x_1, x_2, y_1,y_2);
+            // (x_1-x_2+1)*(y_1-y_2+1);
 
+            uint64_t distx=llabs((x_2-x_1));
+            uint64_t disty=llabs((y_2-y_1));
+            uint64_t area = (distx+1) * (disty+1);    
+
+            /* Here i need to check something... */
+            int inner_x;
+            int inner_y;
+            if(x_1<x_2){
+                inner_x=x_1;
+            } else {
+                inner_x=x_2;
+            }
+            if(y_1<y_2){
+                inner_y=y_1;
+            } else {
+                inner_y=y_2;
+            }
+            if(area > biggest_area) {
+                int valid=1;
+                for(int i_y=inner_y; i_y<=inner_y+disty; ++i_y) {
+                    for(int i_x=inner_x; i_x<=inner_x+distx; ++i_x){
+                        int inner_pos = i_y*width+i_x;
+                        if(grid[inner_pos]=='.'){
+                            valid=0;
+                            goto update_area;
+                        } 
+                    } 
+                }
+update_area:
+                if(valid) biggest_area = area;
+            }
+        }
+    }
+
+    INFO("Biggest area is %llu",biggest_area);
     free(tiles);
     free(draw_tiles);
     free(line);

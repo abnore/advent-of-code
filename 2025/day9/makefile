@@ -1,7 +1,7 @@
 CC      = clang
 LDFLAGS = -lblackbox
 
-SRC = main.c pt1.c pt2.c
+SRC = main.c pt1.c pt2.c pt2-no-raster.c
 OUT = main
 BIN = $(OUT)
 

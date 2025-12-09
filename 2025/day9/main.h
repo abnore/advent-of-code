@@ -15,3 +15,4 @@ typedef struct {
 
 int pt1(FILE* fp);
 int pt2(FILE* fp);
+int pt2_no_raster(FILE* fp);
