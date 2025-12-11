@@ -3,6 +3,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+   Greatest Common Deominator example maybe helpful.. 
+   gcd(12,4) - returns gcd(4,8) which returns gcd(8,4) that is gcd(4,4) which
+   becomes 4! GCD is 4! 4*3
+*/
+
+int gcd(int a, int b){
+    if(a==b) {
+       return a;
+    } else
+    if(a>b) {
+        return gcd(b,(a-b));
+    } else 
+        return gcd(b,a);
+}
+
 /* pt2 helper function - what happens when you push a button */
 static void push_button(int button/* as bitfield */, int *joltage, int N /* how many places */ ){
     /* We need to interprite the bitfield and add on to the joltage */
@@ -139,28 +155,34 @@ static int parse_line(char *line){
      * So what we have are parts to a whole. The numbers are literally:
      * (3)   (1,3)    (2)  (2,3)  (0,2)  (0,1) 
      *
-     * x_1*B0 + x_2*B1 + x_3*B2 + x_4*B3 = Target
+     * x_1*B0 + x_2*B1 + x_3*B2 + x_4*B3 = Target 
      *
-     * (0001)*x_1 
-     * +(0101)*x_2 
-     * +(0010)*x_3 
-     * +(0011)*x_4 
-     * +(0010)*x_5 
-     * +(0100)*x_6 
+     * x_1+x_2+x_3+x_4 = (7, 20]
+     *
+     * Its just a matrix!! 
+     *
+     *   (0 0 0 1)*x_1  This can be written as 
+     * + (0 1 0 1)*x_2 
+     * + (0 0 1 0)*x_3 
+     * + (0 0 1 1)*x_4 
+     * + (1 0 1 0)*x_5 
+     * + (1 1 0 0)*x_6 
      * = {3,5,4,7}
+     *
+     *
      * We just need to solve for the variables! Damnit, its not a square, than removes a lot
      * of matricies tricks i know
      *
-     * Its just a matrix!! 
      */
 
     /* This is the one i will build and check with the reference */
     int joltage[256]={0};
 
-    INFO("Upper limit is %i, lower limits is %i", MAX_LIMIT, LOW_LIMIT);
+    int best=0;
+    INFO("Upper limit is %i, lower limits is %i", MAX_LIMIT, MIN_LIMIT);
 
+    free(t);
     DEBUG("best press is %i", best);
-    free(line);
     return best;
 }
 
@@ -182,5 +204,6 @@ int pt2(FILE* fp){
     }
     INFO("total presses is %i", total);
 
+    free(line);
     return 0;
 }
