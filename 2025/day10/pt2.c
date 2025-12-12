@@ -2,7 +2,7 @@
 #include <blackbox.h>
 #include <stdlib.h>
 #include <string.h>
-
+/* ABORTED. This code is incomplete as it does not solve pt2. It was abandoned as a implementation was to complex. Solved with a python script instead */
 /*
    Greatest Common Deominator example maybe helpful.. 
    gcd(12,4) - returns gcd(4,8) which returns gcd(8,4) that is gcd(4,4) which
