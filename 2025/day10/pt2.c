@@ -19,6 +19,15 @@ int gcd(int a, int b){
         return gcd(b,a);
 }
 
+int comp_button(const void *a, const void *b) {
+    // sort the buttons 
+    int x = *(int*)a;
+    int y = *(int*)b;
+
+    if (x<y) return -1;
+    else if (x==y) return 0;
+    else /*(x>y)*/ return 1;
+}
 /* pt2 helper function - what happens when you push a button */
 static void push_button(int button/* as bitfield */, int *joltage, int N /* how many places */ ){
     /* We need to interprite the bitfield and add on to the joltage */
@@ -47,7 +56,8 @@ static void print_arr(int *arr, int n){
     printf("\n");
 }
 /* parses the string inside '(' and ')' and returns a number.
- * eg (2,3) when bits is 4, will give 3 (b0011), while bits 5 would give 6 (b00110)  */
+ * eg (2,3) when bits is 4, will give 3 (b0011), while when bits are 5
+ * the same button would give 6 (b00110)  */
 static int create_bitfield(char *str, int bits)
 {
     int i=0;
@@ -80,7 +90,7 @@ static int parse_line(char *line){
     int joltage_arr[256] = {0};
     DEBUG("%s",line);
 
-    int i=0,l_i=0, l=0;     
+    int i=0,l_i=0, num_bits=0;     
 
     char c;
     char tmp[256];
@@ -93,11 +103,11 @@ static int parse_line(char *line){
         if(c=='['){
             lights_arr[l_i++]='(';
         }
-        if(c=='.') l++;
+        if(c=='.') num_bits++;
         if(c=='#') {
-            char idx =(char) l+'0';
+            char idx =(char) num_bits+'0';
             lights_arr[l_i++]=idx;
-            l++;
+            num_bits++;
             lights_arr[l_i++]=',';
         }
         if(c==']') {
@@ -106,16 +116,19 @@ static int parse_line(char *line){
         }
         i++;
     }
-    /* Now we are ready to parse the rest of the line, store them as buttons and then check
-     * permutations of the xor to the lights array */
-    int buttons[128]; // the actual button we will xor to try an create lights
+    /* Now we are ready to parse the rest of the line, store them as buttons
+     * and for pt2 do fancy math on it */
+    int buttons[128]; 
     int buttons_count=0;
     for (t = strtok(NULL, " "); t; t = strtok(NULL, " ")) {
         if(t[0]=='{') break;
-        buttons[buttons_count++]=create_bitfield(t, l);
+        buttons[buttons_count++]=create_bitfield(t, num_bits);
         DEBUG("%s", t);
     }
-    DEBUG("%s tokenized", t);
+    /* We sort the buttons here - Make it into nice row echelon form */
+    qsort(buttons, buttons_count, sizeof(int), comp_button);
+    //print_arr(buttons, buttons_count);
+
     strcpy(tmp,t); 
     DEBUG("%s ready to tokenize", tmp);
     int jolt_i=0;
@@ -142,22 +155,6 @@ static int parse_line(char *line){
     }
 
     /* pt2 has slightly different logic, and now we dont care about the lights - 
-     *  now its all about the joltage
-     *      -ignored-       Buttons with indecies       0 1 2 3  <--- Index
-     *       [.##.]    (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7} <---- Amount of times this index is pushed
-     *
-     * So we create a joltage_arr {0,0,0,0,0} and a function to use buttons to increment `push_button`
-     *
-     * Its a goddamn linalg problem!!!
-     *
-     * MAT1100 really comes in handy now!
-     *
-     * So what we have are parts to a whole. The numbers are literally:
-     * (3)   (1,3)    (2)  (2,3)  (0,2)  (0,1) 
-     *
-     * x_1*B0 + x_2*B1 + x_3*B2 + x_4*B3 = Target 
-     *
-     * x_1+x_2+x_3+x_4 = (7, 20]
      *
      * Its just a matrix!! 
      *
@@ -168,12 +165,45 @@ static int parse_line(char *line){
      * + (1 0 1 0)*x_5 
      * + (1 1 0 0)*x_6 
      * = {3,5,4,7}
+     * 
+     * If the buttons get sorted, we automaticly created pivots and free
+     * variables without any computation. Therefore we get this
      *
+     * (dec) 1   2    3     5    10   12 
+     * (bit)(3) (2) (2,3) (1,3) (0,2)(0,1) {3,5,4,7}
+     *      
+     *      1 0 1 1 0 0 3
+     *      0 1 1 0 1 0 5
+     *      0 0 0 1 0 1 4
+     *      0 0 0 0 1 1 7
      *
-     * We just need to solve for the variables! Damnit, its not a square, than removes a lot
-     * of matricies tricks i know
+     * Ordered for visual sake - the leading 1's in a row (first non zero) are pivots.
+     * Those HAS to be in the solution - but the other ones (x4 and x6 in this ex)
+     * are free variables. They can be any non-negative integer. This is already
+     * reduced to echelon form and all we have do to is check every free variable
+     * solution (with MAX_LIMIT) and pick the lowest one. 
      *
+     *          0 <= x4 <= MAX_LIMIT
+     *          0 <= x6 <= MAX_LIMIT
      */
+
+    /* The sum of free variables and pivots is always the same as columns, in our case
+     * buttons. Here we will store the index to the button - the key insight is that
+     * if a spot is a free variable, the column is. The button is pushed means the column is
+     * Therefore we designate whole buttons/col as pivots or free_var
+     */
+    int *pivots = malloc(num_bits * sizeof(int)); // Can never be more then the amount of bits (rows)
+    int *free_var = malloc(buttons_count * sizeof(int)); // Can be up to buttons, but never more
+
+    int mask = 1;
+    for(int i=0; i<buttons_count; ++i)
+    {
+
+       int button = buttons[i];
+       if(button & mask)
+           pivots[i] = button;
+
+    }
 
     /* This is the one i will build and check with the reference */
     int joltage[256]={0};
@@ -182,6 +212,8 @@ static int parse_line(char *line){
     INFO("Upper limit is %i, lower limits is %i", MAX_LIMIT, MIN_LIMIT);
 
     free(t);
+    free(pivots);
+    free(free_var);
     DEBUG("best press is %i", best);
     return best;
 }
@@ -194,14 +226,20 @@ int pt2(FILE* fp){
     int total = 0;
     /* Created everything for 1 line, that worked so i moved it inside here 
      * and created parse_line that returns the best */
-    while((ret = getline(&line, &cap, fp))>0){
-        if(line[ret-1]=='\n'){
-            line[ret-1]='\0';
-        }
-        int best= parse_line(line);
-        total += best;
-
+//    while((ret = getline(&line, &cap, fp))>0){
+//        if(line[ret-1]=='\n'){
+//            line[ret-1]='\0';
+//        }
+//        int best= parse_line(line);
+//        total += best;
+//    }
+    ret = getline(&line, &cap, fp);
+    if(line[ret-1]=='\n'){
+        line[ret-1]='\0';
     }
+    int best = parse_line(line);
+    total += best;
+
     INFO("total presses is %i", total);
 
     free(line);
