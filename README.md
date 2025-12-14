@@ -64,19 +64,20 @@ make
 Run with the test file:
 
 ```
-make run ARGS=test.in
+make test
 ```
 
 Run with the real input:
 
 ```
-make run ARGS=input.in
+make run
 ```
 
 Debug mode:
 
 ```
-make run-debug ARGS=input.in
+make run-debug
+make test-debug
 ```
 
 ---
