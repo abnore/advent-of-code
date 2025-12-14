@@ -16,20 +16,21 @@
     the lowest amount allowed on the bits that were "hit"). That didnt work, i
     undershot by a slight amount, meaning apart from edge cases, it was almost
     the correct algorightm => Greedy-Naive. 
-    Then i saw the connection with part
-    1, and looked into the logic of solving for a goal end state. Realized that
-    a button hit once is lights on, but twice (or every even time) will result
-    in a lights off state; Or stated more clearly: Pressing a button twice is
-    not special => it just adds +2 everywhere that button touches.
+    Then i saw the connection with part 1, and looked into the logic of solving
+    for a goal end state. Realized that a button hit once is lights on, but
+    twice (or every even time) will result in a lights off state; Or stated
+    more clearly: Pressing a button twice is not special => it just adds +2
+    everywhere that button touches.
 
     I then created a goal pattern, and solve for the pattern like part 1, I
     then created the patterns and memoization technique. 
 
-    First decide which buttons are pressed odd times.
+    First decide which buttons are pressed odd amount of times.
     Then divide the remaining problem by 2.
-    Repeat until nothing is left.”
 
+    Repeat until nothing is left.”
 */
+
 /* Hard limits – puzzle input is small */
 #define MAX_BITS    16 // I think i only have 10 max, but added some for safety
 #define MAX_BUTTONS 16 // not this many but whatever
