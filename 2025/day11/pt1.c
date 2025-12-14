@@ -4,8 +4,8 @@
 #include <string.h>
 #include <stdarg.h>
 
-/* My own string builders */
-static char *copy_str(const char *s)
+/* My own string helper */
+char *copy_str(const char *s)
 {
     size_t n=0;
     while(s[n++]!=0); // manual strlen
@@ -16,97 +16,106 @@ static char *copy_str(const char *s)
     return p;
 }
 
-static const char *str_fmt(const char *fmt, ...)
-{
-    va_list args;
+/* 
+   Directed Acyclid Graph (DAG)
+*/
 
-    // compute the length by writing to NULL, size 0
-    va_start(args, fmt);
-    int n = vsnprintf(NULL, 0, fmt, args);
-    va_end(args); // must re init the va args list
-
-    // Write to string s in format fmt variadics
-    char *s = malloc(n + 1);
-    va_start(args, fmt);
-    vsnprintf(s, n + 1, fmt, args);
-    va_end(args);
-
-    return s;
-}
-
-typedef struct{
-    const char **items;
-    size_t count;
-    size_t capacity;
-} Devices ;
-
-typedef struct{
-    const char **items;
-    size_t count;
-    size_t capacity;
-} Parents;
-
-typedef struct{ 
+typedef struct node {
     const char *name;
+    struct node **out;   // outgoing edges
+    size_t out_count;
+    size_t out_cap;
+} node;
+
+/* Dynamic array of strings - using Tsoding macro da_append() */
+typedef struct {
+    node **items;
     size_t count;
     size_t capacity;
-} Neighbours;
+} node_table;
 
-typedef struct{
-    Parents *parents;
-    Devices *children;
-} Graph;
-
-static int is_child(const char* parent, Devices *children){
-    int count = children->count;
-    if(count==0) return -1;
-
-    for(int i=0; i < count; i++)
-    {
-        if(strcmp(parent, children->items[i])==0) return 1;
+/* Simple getter  which returns a node if it exist, otherwise creates it */
+static node *get_node(node_table *t, const char *name)
+{
+    for (size_t i = 0; i < t->count; i++) {
+        if (strcmp(t->items[i]->name, name) == 0)
+            return t->items[i];
     }
-    return 0;
+
+    DEBUG("Creating %s", name);
+    node *n = calloc(1, sizeof(*n));
+    n->name = copy_str(name);
+
+    da_append((*t), n);
+
+    return n;
 }
 
-int pt1(FILE* fp){
-    
-    Graph g = {0};
+static void add_edge(node *from, node *to)
+{
+    if (from->out_count == from->out_cap) 
+    {
+        from->out_cap = from->out_cap ? from->out_cap << 1 : 4;
+        from->out = realloc(from->out, from->out_cap * sizeof(*from->out));
+    }
+    from->out[from->out_count++] = to;
+    TRACE("Adding edge from %s to %s", from->name, to->name);
+}
 
-    /* Create a main parents and childrens list */
-    *p = calloc(1,sizeof(Devices));
-    Devices *c = calloc(1,sizeof(Devices));
+static int count_paths(node *n)
+{
 
-//    g.parents = p;
-//    g.children = c;
+    /* Exit requirement for breaking recursion */
+    if (strcmp(n->name, "out") == 0)
+    {
+        TRACE("Found out");
+        return 1;
+    }
+
+    /* Just walk the graph and count, return 1 when reaching out
+     * Recursively go down, DFS, and pop up with the total 1 at the bottom */
+    int total = 0;
+    for (size_t i = 0; i < n->out_count; i++) {
+        DEBUG("counting paths from %s with out_count: %zu", n->name, n->out_count);
+        total += count_paths(n->out[i]);
+    }
+
+    return total;
+}
+
+int pt1(FILE *fp)
+{
+    node_table table = {0};
 
     char *line = NULL;
     size_t cap = 0;
-    getline(&line, &cap, fp);
-    char *tmp = copy_str(line);
 
-    char *token=strtok(tmp,":");
-    INFO("%s", token);
+    while (getline(&line, &cap, fp) > 0) {
+        /* Remove new line from each line */
+        if (line[strlen(line) - 1] == '\n')
+            line[strlen(line) - 1] = '\0';
 
-//    if(g.parents == NULL)
-//    {
-//        da_append((*p), token);
-//    } else if(is_child(token, c)>0) {
-//         
-//    }
-//
-//    //da_append((*c), t);
-//    if(is_child(token, c)<0) INFO("NO CHILDREN YET!");
-//    if(is_child(token, c)>0) INFO(" MATCH!");
-//    if(is_child(token, c)==0) INFO("NO MATCH!");
-//
-//    INFO("currently in parents: %s", p->items[0]);
-//    INFO("g.parents->count=%zu", g.parents->count);
+        char *tmp = copy_str(line);
 
-    for(token=strtok(NULL," ");token; token=strtok(NULL, " ")) {
-        INFO("%s",token);
+        /* Read in left side of line, and get/create node */
+        char *left_s = strtok(tmp, ":");
+        node *src = get_node(&table, left_s);
+
+        /* For each device on right side, get or create node and add as edge */
+        for (char *tok = strtok(NULL, " "); tok; tok = strtok(NULL, " ")) {
+            node *dst = get_node(&table, tok);
+            add_edge(src, dst);
+        }
+        /* Whatever */
+        free(tmp);
     }
-    free(p);
-    free(c);
 
+    node *start = get_node(&table, "you");
+    int result = count_paths(start);
+
+    INFO("total paths = %d", result);
+    
+    da_free(table);
+    free(line);
     return 0;
 }

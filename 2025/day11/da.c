@@ -16,7 +16,7 @@ typedef struct{
     size_t capacity;
 } Names;
 
-#define da_append(xs, x) \
+define da_append(xs, x) \
      do {\
         if(xs.count >= xs.capacity){\
             if (xs.capacity == 0) xs.capacity = 256;\
