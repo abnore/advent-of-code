@@ -16,9 +16,8 @@ int main(int argc, char** argv)
         return -1;
     }
 
+    // day 12 has no part 2
     pt1(fp);
-    fseek(fp, 0, SEEK_SET);
-    pt2(fp);
 
     fclose(fp);
     shutdown_log();
