@@ -24,8 +24,8 @@ Each day has:
 | 7 | $${\Large \color{gold}★★}$$ |
 | 8 | $${\Large \color{gold}★★}$$ |
 | 9 | $${\Large \color{gold}★★}$$ |
-| 10 |$${\Large \color{gold}★}$$  |
-| 11 |  |
+| 10 |$${\Large \color{gold}★★}$$ |
+| 11 |$${\Large \color{gold}★★}$$ |
 | 12 |  |
 
 More falling soon like snowflakes ❄️
