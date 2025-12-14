@@ -16,8 +16,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    int res = pt1(fp);
-    INFO("pt1 = %i", res);
+    pt1(fp);
     fseek(fp, 0, SEEK_SET);
     pt2(fp);
 
