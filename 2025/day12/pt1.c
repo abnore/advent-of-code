@@ -1,3 +1,40 @@
+#if 1
+/* This is actually the only thing we need to do. Every present, might have "a shape"
+ * But in reality a present is a box - and we treat it as such. The naive solution is
+ * therefore just to compare all the space available, based on a 3x3 box, and counting
+ * boxes. Thats it. Below in the #else block is my previous code that i used to build this
+ * */
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+int pt1(FILE *fp)
+{
+    char *line = NULL;
+    size_t cap = 0;
+    int valid = 0;
+
+    /* skip shapes */
+    for (int i = 0; i < 6 * 4; i++)
+        getline(&line, &cap, fp);
+
+    /* regions */
+    while (getline(&line, &cap, fp) > 0) {
+        int w, h, p1,p2,p3,p4,p5,p6;
+        if (sscanf(line, "%dx%d: %d %d %d %d %d %d",
+                   &w,&h,&p1,&p2,&p3,&p4,&p5,&p6) != 8)
+            continue;
+
+        int total = p1+p2+p3+p4+p5+p6;
+        if ((w/3) * (h/3) >= total)
+            valid++;
+    }
+
+    free(line);
+    return valid;
+}
+
+#else
 #include "main.h"
 #include <blackbox.h>
 #include <string.h>
@@ -19,7 +56,24 @@
  * making it impossible
  *
  * Therefore the code we need to write is just to compare the sum of both area and region
- * */
+ *
+ *     => Read region: 46x45: 58 53 45 42 67 52
+ *         => 46x45=225 total packages = 317    <--- This fails
+ *         => Area used by packages is 2073
+ *         => Area of the region is 2070
+ *     => Read region: 46x38: 26 24 33 35 34 27
+ *        => 46x38=180 total packages = 179     <--- This succeeds
+ *        => Area used by packages is 1164
+ *        => Area of the region is 1748
+ *
+ *
+ *    Take this for example.. 
+ *
+ *  50x50: 43 56 40 46 42 29 - 50 squares wide... at MOST a shape is 3 squares..
+ *  that means i can fit 16 shapes sideways AND up.. 16*16 is 256.. and that is a
+ *  3x3 square.. the sum of all those number above, is also 256; total shapes! ...... 
+ *  so the area can fit a full square, nevermind a shape..
+ */
 
 static inline int cell_color(int x, int y) {
     return (x + y) & 1;
@@ -149,25 +203,31 @@ int pt1(FILE *fp)
 //    print_shape(shapes[0]);
 
     int valid_regions = 0;
+    int silly_valid= 0;
 
-    int res = 0;
     while (read_region(fp, &reg) > 0) {
 
-        int region_area = reg.col * reg.row;
-        res += region_area;
+        int total_packages = 0;
+        for (int i = 0; i < 6; i++) total_packages += reg.idx[i];
 
+        int region_area = reg.col * reg.row;
         int area_used = 0;
-        for (int i = 0; i < 6; ++i) {
+
+        for (int i = 0; i < 6; ++i)
             area_used += reg.idx[i] * shapes[i].area;
-        }
+        int space = (reg.col/3) * (reg.row/3);
+
+        INFO("%dx%d=%d total packages = %d", reg.col, reg.row, space, total_packages);
         INFO("Area used by packages is %i", area_used);
         INFO("Area of the region is %i", region_area);
-        if (region_area >= area_used) {
+        if (region_area >= area_used && space >= total_packages) 
+        { 
+            silly_valid++;
             valid_regions++;
         }
     }
 
-    INFO("total area in regions is %i", res);
-    INFO("regions that can fit shapes = %d", valid_regions);
+    INFO("regions that can fit shapes = %d, silly valid %d", valid_regions, silly_valid);
     return 0;
 }
+#endif

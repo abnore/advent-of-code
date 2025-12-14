@@ -17,8 +17,9 @@ int main(int argc, char** argv)
     }
 
     // day 12 has no part 2
-    pt1(fp);
+    int ret = pt1(fp);
 
+    INFO("Answer is %d", ret);
     fclose(fp);
     shutdown_log();
     return 0;
