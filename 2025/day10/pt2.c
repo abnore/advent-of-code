@@ -2,246 +2,255 @@
 #include <blackbox.h>
 #include <stdlib.h>
 #include <string.h>
-/* ABORTED. This code is incomplete as it does not solve pt2. It was abandoned as a implementation was to complex. Solved with a python script instead */
+#include <limits.h>
+#include <stdint.h>
 /*
-   Greatest Common Deominator example maybe helpful.. 
-   gcd(12,4) - returns gcd(4,8) which returns gcd(8,4) that is gcd(4,4) which
-   becomes 4! GCD is 4! 4*3
+
+    There are certain patterns we needed to understand to solve this puzzle.
+    I have spent many days now on this one, it was absolutely the hardest. And
+    I refused to believe Eric wanted people to solve RREF Gaussian
+    eliminations, as that is to advanced. I saw a pattern which worked for the
+    test cases but came up short on the real input. That was finding unique
+    bits and then maxing out those buttons and then sorting the numbers from
+    high to low, and adding up the max amount without overshooting (basicly to
+    the lowest amount allowed on the bits that were "hit"). That didnt work, i
+    undershot by a slight amount, meaning apart from edge cases, it was almost
+    the correct algorightm => Greedy-Naive. 
+    Then i saw the connection with part
+    1, and looked into the logic of solving for a goal end state. Realized that
+    a button hit once is lights on, but twice (or every even time) will result
+    in a lights off state; Or stated more clearly: Pressing a button twice is
+    not special => it just adds +2 everywhere that button touches.
+
+    I then created a goal pattern, and solve for the pattern like part 1, I
+    then created the patterns and memoization technique. 
+
+    First decide which buttons are pressed odd times.
+    Then divide the remaining problem by 2.
+    Repeat until nothing is left.”
+
 */
+/* Hard limits – puzzle input is small */
+#define MAX_BITS    16 // I think i only have 10 max, but added some for safety
+#define MAX_BUTTONS 16 // not this many but whatever
+#define MAX_PATTERNS 1024
+#define INF 1000000000
 
-int gcd(int a, int b){
-    if(a==b) {
-       return a;
-    } else
-    if(a>b) {
-        return gcd(b,(a-b));
-    } else 
-        return gcd(b,a);
-}
+typedef struct {
+    int vec[MAX_BITS];  // how much each counter increases
+    int size;           // how many buttons were pressed
+} pattern;
 
-int comp_button(const void *a, const void *b) {
-    // sort the buttons 
-    int x = *(int*)a;
-    int y = *(int*)b;
+/*
+    Patterns are grouped by parity mask.
+    parity mask = bit i set if vec[i] is odd.
+    If vec(x) does not match the parity of goal,
+    then (goal - vec(x)) / 2 is impossible.
 
-    if (x<y) return -1;
-    else if (x==y) return 0;
-    else /*(x>y)*/ return 1;
-}
-/* pt2 helper function - what happens when you push a button */
-static void push_button(int button/* as bitfield */, int *joltage, int N /* how many places */ ){
-    /* We need to interprite the bitfield and add on to the joltage */
-    int n = button; 
-    while(N--)
-    {
-        DEBUG("button: %i",n);
-        joltage[N] += (n&1);
-        n>>=1;
-    }
-}
-static int compare_jolt(int *jolt_ref, int *jolt_mine, int N /* Amount of bits or spaces in the array, 1-indexes */)
+    You cannot cleanly divide odd numbers by 2!
+    So only patterns whose parity matches the goal are legal.
+
+    This single rule kills 99% of invalid branches
+
+        bit i = 1 if v[i] is odd
+    This matters because:
+    If goal[i] is odd, the pattern must be odd at i, or (goal - vec)/2 breaks.
+    No parity match means impossible branch.
+
+    This is the entire pruning rule.
+*/
+static pattern patterns[1 << MAX_BITS][MAX_PATTERNS];
+static int pattern_count[1 << MAX_BITS];
+
+/* Simple memo cache for recursion */
+typedef pattern cache_entry;
+static cache_entry cache[200000];
+static int cache_len = 0;
+
+static int num_bits;
+
+/* Check if goal is fully satisfied */
+static int goal_is_zero(const int *g)
 {
-    while(N--)
-    {
-        if(jolt_ref[N]==0 || jolt_mine[N] == 0) return -1; // Error occured - not the same
-        if(jolt_ref[N]!=jolt_mine[N]) return 0; // Not the same, can be used in a condition
-    }
-    return 1; // never failed
+    for (int i = 0; i < num_bits; ++i)
+        if (g[i] != 0)
+            return 0;
+    return 1;
 }
-/* Helper to print out the array in binary looking way */
-static void print_arr(int *arr, int n){
-    for(int i=0; i<n; ++i){
-        printf("%d ", arr[i]);
-    }
-    printf("\n");
-}
-/* parses the string inside '(' and ')' and returns a number.
- * eg (2,3) when bits is 4, will give 3 (b0011), while when bits are 5
- * the same button would give 6 (b00110)  */
-static int create_bitfield(char *str, int bits)
+
+/* Compute parity mask of a vector with some bit fiddling */
+static int parity_mask(const int *v)
 {
-    int i=0;
-    int indexes;
-    int bitshifts;
-    int start = 0; 
-    // string boundry is ( )
-    while(str[i]!=')')
-    {
-        if(str[i]=='(' || str[i]==','){
-            i++;
+    int mask = 0;
+    for (int i = 0; i < num_bits; ++i)
+        if (v[i] & 1)
+            mask |= (1 << i);
+    return mask;
+}
+
+/* Check v <= goal */
+static int vec_fits(const int *v, const int *goal)
+{
+    for (int i = 0; i < num_bits; ++i)
+        if (v[i] > goal[i])
+            return 0;
+    return 1;
+}
+
+/* (goal - v) / 2 */
+static void reduce_goal(int *dst, const int *goal, const int *v)
+{
+    for (int i = 0; i < num_bits; ++i)
+        dst[i] = (goal[i] - v[i]) >> 1;
+}
+
+/* cache lookup for my makeshift cache for memoization, linear is fine */
+static int cache_lookup(const int *goal)
+{
+    for (int i = 0; i < cache_len; ++i) {
+        if (memcmp(cache[i].vec, goal, sizeof(int)*num_bits) == 0)
+            return cache[i].size;
+    }
+    return -1;
+}
+
+static void cache_store(const int *goal, int value)
+{
+    memcpy(cache[cache_len].vec, goal, sizeof(int)*num_bits);
+    cache[cache_len].size = value;
+    cache_len++;
+}
+
+/* Recursion to solve the patterns and cache results - making this manageable */
+static int solve_rec(const int *goal)
+{
+    if (goal_is_zero(goal))
+        return 0;
+
+    int cached = cache_lookup(goal);
+    //DEBUG("%0x%x, cached", cached);
+    if (cached >= 0)
+        return cached;
+
+    int best = INF;
+    int pm = parity_mask(goal);
+    TRACE("0x%x -> pm ", pm);
+    /*
+        Only patterns with matching parity are legal.
+        This is the whole trick.
+    */
+    for (int i = 0; i < pattern_count[pm]; ++i) {
+        pattern *p = &patterns[pm][i];
+
+        if (!vec_fits(p->vec, goal))
             continue;
+
+        int next[MAX_BITS];
+        reduce_goal(next, goal, p->vec);
+
+        int sub = solve_rec(next);
+        if (sub < INF) {
+            int candidate = p->size + 2 * sub;
+            DEBUG("%d candidate", candidate);
+            if (candidate < best)
+                best = candidate;
         }
-        indexes = str[i] - '0';
-        if(indexes >= bits) 
-            return -1;
-
-        bitshifts = (bits-1)-indexes;
-        start |= 1 << bitshifts;
-        i++;
-    }
-    return start;
-}
-
-/* Does the heavy lifting and returns the amount of presse each line needs */
-static int parse_line(char *line){
-
-    /* This is the array we use to create the actual bit representation of the num*/
-    int lights_arr[256] = {0};
-    int joltage_arr[256] = {0};
-    DEBUG("%s",line);
-
-    int i=0,l_i=0, num_bits=0;     
-
-    char c;
-    char tmp[256];
-    strcpy(tmp, line); 
-    char *t = strtok(tmp, " "); 
-    int t_len=strlen(t);
-    while(t_len--){
-        c=t[i];
-        TRACE("c is %c", c);
-        if(c=='['){
-            lights_arr[l_i++]='(';
-        }
-        if(c=='.') num_bits++;
-        if(c=='#') {
-            char idx =(char) num_bits+'0';
-            lights_arr[l_i++]=idx;
-            num_bits++;
-            lights_arr[l_i++]=',';
-        }
-        if(c==']') {
-            lights_arr[l_i-1]=')';
-            break;
-        }
-        i++;
-    }
-    /* Now we are ready to parse the rest of the line, store them as buttons
-     * and for pt2 do fancy math on it */
-    int buttons[128]; 
-    int buttons_count=0;
-    for (t = strtok(NULL, " "); t; t = strtok(NULL, " ")) {
-        if(t[0]=='{') break;
-        buttons[buttons_count++]=create_bitfield(t, num_bits);
-        DEBUG("%s", t);
-    }
-    /* We sort the buttons here - Make it into nice row echelon form */
-    qsort(buttons, buttons_count, sizeof(int), comp_button);
-    //print_arr(buttons, buttons_count);
-
-    strcpy(tmp,t); 
-    DEBUG("%s ready to tokenize", tmp);
-    int jolt_i=0;
-
-    /* I dont know if it will help later or not, but I at least identified a range. At worst, 
-     * each button increments only one index which means the sum of all the numbers is the most
-     * we will ever need to push a button - but at the same time, the highest number in the list
-     * is the minimum we need to push, even if we have a magic button that hits
-     * all numbers, the highest number must still be reached.
-     * Extracting them for now. Lets see.
-     */
-    int MIN_LIMIT=0;
-    int MAX_LIMIT=0;
-    for (t = strtok(tmp, "{,"); t; t = strtok(NULL, ",}")) 
-    {
-        int jolt = atoi(t);
-        if(jolt>MIN_LIMIT) { MIN_LIMIT=jolt; }
-        MAX_LIMIT+=jolt;
-
-        joltage_arr[jolt_i] = jolt; 
-        DEBUG("%d",joltage_arr[jolt_i]);
-
-        jolt_i++;
     }
 
-    /* pt2 has slightly different logic, and now we dont care about the lights - 
-     *
-     * Its just a matrix!! 
-     *
-     *   (0 0 0 1)*x_1  This can be written as 
-     * + (0 1 0 1)*x_2 
-     * + (0 0 1 0)*x_3 
-     * + (0 0 1 1)*x_4 
-     * + (1 0 1 0)*x_5 
-     * + (1 1 0 0)*x_6 
-     * = {3,5,4,7}
-     * 
-     * If the buttons get sorted, we automaticly created pivots and free
-     * variables without any computation. Therefore we get this
-     *
-     * (dec) 1   2    3     5    10   12 
-     * (bit)(3) (2) (2,3) (1,3) (0,2)(0,1) {3,5,4,7}
-     *      
-     *      1 0 1 1 0 0 3
-     *      0 1 1 0 1 0 5
-     *      0 0 0 1 0 1 4
-     *      0 0 0 0 1 1 7
-     *
-     * Ordered for visual sake - the leading 1's in a row (first non zero) are pivots.
-     * Those HAS to be in the solution - but the other ones (x4 and x6 in this ex)
-     * are free variables. They can be any non-negative integer. This is already
-     * reduced to echelon form and all we have do to is check every free variable
-     * solution (with MAX_LIMIT) and pick the lowest one. 
-     *
-     *          0 <= x4 <= MAX_LIMIT
-     *          0 <= x6 <= MAX_LIMIT
-     */
-
-    /* The sum of free variables and pivots is always the same as columns, in our case
-     * buttons. Here we will store the index to the button - the key insight is that
-     * if a spot is a free variable, the column is. The button is pushed means the column is
-     * Therefore we designate whole buttons/col as pivots or free_var
-     */
-    int *pivots = malloc(num_bits * sizeof(int)); // Can never be more then the amount of bits (rows)
-    int *free_var = malloc(buttons_count * sizeof(int)); // Can be up to buttons, but never more
-
-    int mask = 1;
-    for(int i=0; i<buttons_count; ++i)
-    {
-
-       int button = buttons[i];
-       if(button & mask)
-           pivots[i] = button;
-
-    }
-
-    /* This is the one i will build and check with the reference */
-    int joltage[256]={0};
-
-    int best=0;
-    INFO("Upper limit is %i, lower limits is %i", MAX_LIMIT, MIN_LIMIT);
-
-    free(t);
-    free(pivots);
-    free(free_var);
-    DEBUG("best press is %i", best);
+    /* And we store it for easier lookup later */
+    cache_store(goal, best);
     return best;
 }
 
-int pt2(FILE* fp){
 
-    char *line=NULL;
-    size_t cap=0;
-    ssize_t ret;
-    int total = 0;
-    /* Created everything for 1 line, that worked so i moved it inside here 
-     * and created parse_line that returns the best */
-//    while((ret = getline(&line, &cap, fp))>0){
-//        if(line[ret-1]=='\n'){
-//            line[ret-1]='\0';
-//        }
-//        int best= parse_line(line);
-//        total += best;
-//    }
-    ret = getline(&line, &cap, fp);
-    if(line[ret-1]=='\n'){
-        line[ret-1]='\0';
+static void build_patterns(int coeffs[MAX_BUTTONS][MAX_BITS], int button_count)
+{
+    memset(pattern_count, 0, sizeof(pattern_count));
+
+    int subsets = 1 << button_count;
+
+    /*
+        Enumerate ALL subsets of buttons.
+        This is exactly Part 1.
+    */
+    for (int mask = 0; mask < subsets; ++mask) {
+        int vec[MAX_BITS] = {0};
+        int size = 0;
+
+        for (int b = 0; b < button_count; ++b) {
+            if (mask & (1 << b)) {
+                size++;
+                for (int i = 0; i < num_bits; ++i)
+                    vec[i] += coeffs[b][i]; // add instead of xor
+            }
+        }
+
+        int pm = parity_mask(vec);
+        int idx = pattern_count[pm]++;
+
+        memcpy(patterns[pm][idx].vec, vec, sizeof(int)*num_bits);
+        patterns[pm][idx].size = size;
     }
-    int best = parse_line(line);
-    total += best;
+}
 
-    INFO("total presses is %i", total);
+static int parse_line(char *line)
+{
+    int coeffs[MAX_BUTTONS][MAX_BITS]; // The buttons are coefficients and bits
+    int button_count = 0;
+    int goal[MAX_BITS]; // The end state
 
+    /* Count number of bits from first input, but ignore it */
+    num_bits = 0;
+    for (char *p = line; *p && *p != ']'; ++p)
+        if (*p == '.' || *p == '#')
+            num_bits++;
+
+    /* Parse button definitions */
+    char *p = line;
+    while ((p = strchr(p, '('))) {
+        p++;
+        memset(coeffs[button_count], 0, sizeof(int)*num_bits);
+
+        while (*p && *p != ')') {
+            if (*p >= '0' && *p <= '9') {
+                int idx = *p - '0';
+                coeffs[button_count][idx] = 1;
+            }
+            p++;
+        }
+        button_count++;
+    }
+
+    /* Parse target joltage */
+    p = strchr(line, '{') + 1;
+    for (int i = 0; i < num_bits; ++i) {
+        goal[i] = atoi(p);
+        while (*p && *p != ',' && *p != '}') p++;
+        if (*p == ',') p++;
+    }
+
+    cache_len = 0;
+    build_patterns(coeffs, button_count);
+
+    return solve_rec(goal);
+}
+
+int pt2(FILE *fp)
+{
+    char *line = NULL;
+    size_t cap = 0;
+    ssize_t n;
+
+    uint64_t total = 0;
+
+    while ((n = getline(&line, &cap, fp)) > 0) {
+        if (line[n-1] == '\n')
+            line[n-1] = '\0';
+
+        total += parse_line(line);
+    }
+
+    INFO("total presses is %lld", total);
     free(line);
     return 0;
 }

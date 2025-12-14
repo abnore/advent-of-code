@@ -1,0 +1,26 @@
+
+ p	c
+aaa: you hhh
+you: bbb ccc
+bbb: ddd eee
+ccc: ddd eee fff
+ddd: ggg
+eee: out
+fff: out
+ggg: out
+hhh: ccc fff iii
+iii: out
+
+
+you-b-d-g-out
+you-b-e-out
+
+you-c-d-g-out
+you-c-e-out
+you-c-f-out
+
+
+[aaa] - [you] - [hhh]
+
+directed graph problem. Then use DFS to count paths
+
