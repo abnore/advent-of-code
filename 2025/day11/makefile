@@ -6,6 +6,7 @@ OUT = main
 BIN = $(OUT)
 FILE = input.in
 TEST = test.in
+NEW_TEST = new_test.in
 
 # Default: NORMAL run — no debug, no trace
 LOG_LEVELS ?= -debug,-trace
@@ -38,6 +39,11 @@ test : $(BIN)
 test-debug:   ; @$(MAKE) test LOG_LEVELS=-trace
 test-all:   ; @$(MAKE) test LOG_LEVELS=ALL
 
+# Same only with tests
+test2 : $(BIN)
+	@LOG_LEVELS="$(LOG_LEVELS)" ./$(BIN) $(NEW_TEST)
+test2-debug:   ; @$(MAKE) test LOG_LEVELS=-trace
+test2-all:   ; @$(MAKE) test LOG_LEVELS=ALL
 clean:
 	@echo "Cleaning up/"
 	@rm -f $(BIN)
