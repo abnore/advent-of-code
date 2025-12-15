@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* 
+/*
    pt2 is cyclical! Need backtacking with cycles
 */
 
@@ -59,7 +59,7 @@ static node *get_node(node_table *t, const char *name)
     DEBUG("Creating node %s", name);
     node *n = calloc(1, sizeof(*n));
     n->name = copy_str(name);
-    
+
     da_append((*t), n);
 
     return n;
@@ -82,10 +82,10 @@ static void add_edge(node *from, node *to)
     to->in[to->in_count++] = from;
 }
 
-/* Reachability marking - We need a way to know if it can reach each before counting anything
- * We walk the graph backwards and mark which nodes are allowed to eventually
- * reach out, dac, or fft
- * By extension - every node that points to it can also reach out(or ffs/dac)!
+/* Reachability marking - We need a way to know if it can reach each before
+ * counting anything We walk the graph backwards and mark which nodes are
+ * allowed to eventually reach out, dac, or fft By extension - every node that
+ * points to it can also reach out(or ffs/dac)!
  */
 
 static void _can_reach_out(node *n)
@@ -116,7 +116,7 @@ static void compute_reachability(node_table *t)
 {
     for (size_t i = 0; i < t->count; i++) {
         node *n = t->items[i];
-        
+
         if (is_name(n, "out"))
             _can_reach_out(n);
         if (is_name(n, "dac"))
