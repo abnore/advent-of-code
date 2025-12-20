@@ -1,9 +1,9 @@
 #if 1
-/* This is actually the only thing we need to do. Every present, might have "a shape"
- * But in reality a present is a box - and we treat it as such. The naive solution is
- * therefore just to compare all the space available, based on a 3x3 box, and counting
- * boxes. Thats it. Below in the #else block is my previous code that i used to build this
- * */
+/* This is actually the only thing we need to do. Every present, might have "a
+ * shape" But in reality a present is a box - and we treat it as such. The
+ * naive solution is therefore just to compare all the space available, based
+ * on a 3x3 box, and counting boxes. Thats it. Below in the #else block is my
+ * previous code that i used to build this */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -34,45 +34,45 @@ int pt1(FILE *fp)
     return valid;
 }
 
+/* ------  Previous Solution before it was raffined into the above ------- */
 #else
+
 #include "main.h"
 #include <blackbox.h>
 #include <string.h>
 #include <stdlib.h>
 
 #define NUM_SHAPES 6
- 
-/* I will borrow a trick from researching how chess engines work.
- * I will count the number of black and white squares occupied, and that
- * must be less then the total, we can throw it out if it is 4x4 is 8 black,
- * 8 white - and the example shape takes up 4 black and 3 white. 2 of then CAN fit, 
- * if the orientation works - This means we can massivly reduce the search area
- * Instead of just counting squares, chess pattern will give a parity, and the same amount
- * of B&W ratio..... 
+
+/* I will borrow a trick from researching how chess engines work. I will count
+ * the number of black and white squares occupied, and that must be less then
+ * the total, we can throw it out if it is 4x4 is 8 black, 8 white - and the
+ * example shape takes up 4 black and 3 white. 2 of then CAN fit, if the
+ * orientation works - This means we can massivly reduce the search area
+ * Instead of just counting squares, chess pattern will give a parity, and the
+ * same amount of B&W ratio.....
  *
  *
- * nevermind.. i re-read the problem - We are just to compare areas.. 
- * Almost every region is massively under-filled, or the packages sum up to more area, 
+ * nevermind.. i re-read the problem - We are just to compare areas.. Almost
+ * every region is massively under-filled, or the packages sum up to more area,
  * making it impossible
  *
- * Therefore the code we need to write is just to compare the sum of both area and region
+ * Therefore the code we need to write is just to compare the sum of both area
+ * and region
  *
- *     => Read region: 46x45: 58 53 45 42 67 52
- *         => 46x45=225 total packages = 317    <--- This fails
- *         => Area used by packages is 2073
- *         => Area of the region is 2070
- *     => Read region: 46x38: 26 24 33 35 34 27
- *        => 46x38=180 total packages = 179     <--- This succeeds
- *        => Area used by packages is 1164
- *        => Area of the region is 1748
+ *     => Read region: 46x45: 58 53 45 42 67 52 => 46x45=225 total packages =
+ *     317    <--- This fails => Area used by packages is 2073 => Area of the
+ *     region is 2070 => Read region: 46x38: 26 24 33 35 34 27 => 46x38=180
+ *     total packages = 179     <--- This succeeds => Area used by packages is
+ *     1164 => Area of the region is 1748
  *
  *
- *    Take this for example.. 
+ *    Take this for example..
  *
- *  50x50: 43 56 40 46 42 29 - 50 squares wide... at MOST a shape is 3 squares..
- *  that means i can fit 16 shapes sideways AND up.. 16*16 is 256.. and that is a
- *  3x3 square.. the sum of all those number above, is also 256; total shapes! ...... 
- *  so the area can fit a full square, nevermind a shape..
+ *  50x50: 43 56 40 46 42 29 - 50 squares wide... at MOST a shape is 3
+ *  squares.. that means i can fit 16 shapes sideways AND up.. 16*16 is 256..
+ *  and that is a 3x3 square.. the sum of all those number above, is also 256;
+ *  total shapes! ...... so the area can fit a full square, nevermind a shape..
  */
 
 static inline int cell_color(int x, int y) {
@@ -85,7 +85,7 @@ typedef struct {
     int area;
 } Shape;
 
-Shape shapes[NUM_SHAPES] = {0}; // keeping things reeeally simple with a global 
+Shape shapes[NUM_SHAPES] = {0}; // keeping things reeeally simple with a global
 
 typedef struct {
     int row, col;
@@ -179,7 +179,7 @@ int read_region(FILE *fp, Region *r)
     free(line);
     return ret;
 }
-// Well this was a waste of time... 
+// Well this was a waste of time...
 //static void rotate_shape(Shape *s)
 //{
 //    char tmp[3][4]; // 3 rows, "###\0"
@@ -217,17 +217,18 @@ int pt1(FILE *fp)
             area_used += reg.idx[i] * shapes[i].area;
         int space = (reg.col/3) * (reg.row/3);
 
-        INFO("%dx%d=%d total packages = %d", reg.col, reg.row, space, total_packages);
+        INFO("%dx%d=%d total packages = %d",reg.col,reg.row,space,total_packages);
         INFO("Area used by packages is %i", area_used);
         INFO("Area of the region is %i", region_area);
-        if (region_area >= area_used && space >= total_packages) 
-        { 
+        if (region_area >= area_used && space >= total_packages)
+        {
             silly_valid++;
             valid_regions++;
         }
     }
 
-    INFO("regions that can fit shapes = %d, silly valid %d", valid_regions, silly_valid);
+    INFO("regions that can fit shapes = %d, silly valid %d",
+            valid_regions,silly_valid);
     return 0;
 }
 #endif
