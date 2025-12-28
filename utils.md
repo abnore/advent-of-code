@@ -1,6 +1,6 @@
-# Gathering notes
-Just gathering notes for the remaining week, so i dont have to man-page everything,
-and reminding me that these functions exist so I dont have to reinvent the wheel (sorting algorithm)
+# Gathering notes Just gathering notes for the remaining week, so i dont have
+to man-page everything, and reminding me that these functions exist so I dont
+have to reinvent the wheel (sorting algorithm)
 
 ## Common `sscanf` Patterns
 
@@ -119,7 +119,8 @@ bigbuf[pos] = '\0';
 ### Quick tokenize helper
 ```c
 char tmp[256];
-strcpy(tmp, line); // Never call strtok on original string if you still need it! Modifies it!
+strcpy(tmp, line); 
+// Never call strtok on original string if you still need it! Modifies!
 
 for (char *t = strtok(tmp, ","); t; t = strtok(NULL, ",")) {
     // use t

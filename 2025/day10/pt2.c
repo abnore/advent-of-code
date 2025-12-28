@@ -15,7 +15,7 @@
     high to low, and adding up the max amount without overshooting (basicly to
     the lowest amount allowed on the bits that were "hit"). That didnt work, i
     undershot by a slight amount, meaning apart from edge cases, it was almost
-    the correct algorightm => Greedy-Naive. 
+    the correct algorightm => Greedy-Naive.
     Then i saw the connection with part 1, and looked into the logic of solving
     for a goal end state. Realized that a button hit once is lights on, but
     twice (or every even time) will result in a lights off state; Or stated
@@ -23,7 +23,7 @@
     everywhere that button touches.
 
     I then created a goal pattern, and solve for the pattern like part 1, I
-    then created the patterns and memoization technique. 
+    then created the patterns and memoization technique.
 
     First decide which buttons are pressed odd amount of times.
     Then divide the remaining problem by 2.
