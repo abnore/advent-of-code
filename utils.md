@@ -119,7 +119,7 @@ bigbuf[pos] = '\0';
 ### Quick tokenize helper
 ```c
 char tmp[256];
-strcpy(tmp, line); 
+strcpy(tmp, line);
 // Never call strtok on original string if you still need it! Modifies!
 
 for (char *t = strtok(tmp, ","); t; t = strtok(NULL, ",")) {
