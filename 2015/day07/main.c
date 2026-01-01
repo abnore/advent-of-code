@@ -19,12 +19,14 @@ int main(int argc, char** argv)
     int answer;
 
     answer = pt1(fp);
-    INFO("Part 1: %d", answer);
+    if(answer)
+        INFO("Part 1: %d", answer);
 
     fseek(fp, 0, SEEK_SET);
 
     answer = pt2(fp);
-    INFO("Part 2: %d", answer);
+    if(answer)
+        INFO("Part 2: %d", answer);
 
     fclose(fp);
     shutdown_log();

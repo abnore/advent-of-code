@@ -3,6 +3,7 @@
 
 int pt1(FILE* fp){
     (void)fp;
-    INFO("Hello from pt1");
-    return 0;
+    int answer=1;
+
+    return answer;
 }
