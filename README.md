@@ -8,8 +8,8 @@ Each year gets its own Christmas magic. 🎄✨
 ## $${\Large \color{gold}⭐\ Years}$$
 
 - **2015** — $${\color{red}Incomplete}$$ (Found it enjoyable and went back for earlier years)  
-- **2024** — $${\color{red}Incomplete}$$ (Just ignore. Archived for nostalgia.)  
-- **2025** — $${\color{green}Active\ Year!}$$  
+- **2024** — $${\color{red}Incomplete}$$ 
+- **2025** — $${\color{green}Complete}$$  
   My first *fully structured* AoC with:
   - `main.c`, `pt1.c`, `pt2.c`
   - standardized input files (`input.in`, `test.in`)
@@ -22,6 +22,7 @@ Each year gets its own Christmas magic. 🎄✨
 
 ```
 .
+├── 2015/     → First year
 ├── 2024/     → Old attempt (kept, but ignored)
 ├── 2025/     → Current
 └── README.md → You are here!
