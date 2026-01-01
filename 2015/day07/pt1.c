@@ -26,7 +26,7 @@ typedef struct{
 static cache_entry c[CACHE_SIZE]={0};
 static int cache_count=0;
 
-static void cache_insert(const char* instruction, int result){
+static void cache_store(const char* instruction, int result){
     DEBUG("Caching \"%s\": %i", instruction, result);
     c[cache_count].instruction=strdup(instruction);
     c[cache_count++].result=result;
@@ -113,18 +113,16 @@ static int create_instruction(wire *a, char *string){
 }
 // Recursive function to find a value
 static uint16_t extract_value(wire *a){
-    uint16_t result=-1;
+
+    char _instruction[64]={0};
+    create_instruction(a, _instruction);
 
     /* If the result is cached, return it */
-    char _instruction[64]={0};
-    if(create_instruction(a, _instruction)<0)
-        ERROR("i dunno..");
-
     int cached = cache_lookup(_instruction);
-    if(cached!=-1) {
-        return (uint16_t)cached;
-    } else {
+    if(cached < 0) {
         TRACE("\"%s\" Not cached", _instruction);
+    } else {
+        return (uint16_t)cached;
     }
 
     DEBUG("extracting value of \"%s\"->\"%s\"", a->name, _instruction);
@@ -139,7 +137,6 @@ static uint16_t extract_value(wire *a){
             wire *b = find_wire(a->instructions[0]);
             a->value = extract_value(b);
         }
-        DEBUG("returning value %i", a->value);
         return a->value;
     }
 
@@ -153,8 +150,7 @@ static uint16_t extract_value(wire *a){
     /* 2 is always NOT */
     if(a->count == 2){
         op_1 = find_wire(a->instructions[1]);
-        uint16_t value = extract_value(op_1);
-        result = NOT(value);
+        a->value = NOT(extract_value(op_1));
     }
 
     /* Need to resolve which command */
@@ -177,25 +173,24 @@ static uint16_t extract_value(wire *a){
         }
         /* Evaluate the commands */
         if(!strcmp(cmd, "AND")){
-            result = AND(value_l, value_r);
+            a->value = AND(value_l, value_r);
         } else
         if(!strcmp(cmd, "OR")){
-            result = OR(value_l, value_r);
+            a->value = OR(value_l, value_r);
         } else
         if(!strcmp(cmd, "LSHIFT")){
-            result = LSHIFT(value_l, value_r);
+            a->value = LSHIFT(value_l, value_r);
         } else
         if(!strcmp(cmd, "RSHIFT")){
-            result = RSHIFT(value_l, value_r);
+            a->value = RSHIFT(value_l, value_r);
         }
     }
 
     /* At the end of this function, if we get here we cache the result */
-    cache_insert(_instruction, result);
-    a->value = result;
+    cache_store(_instruction, a->value);
 
     TRACE("Recursion over - returning \"%s\" with value %i ", a->name, a->value);
-    return result;
+    return a->value;
 }
 
 int pt1(FILE* fp){
@@ -207,11 +202,12 @@ int pt1(FILE* fp){
 
     wire *w = find_wire("a");
     if(w){
-
         uint16_t v = extract_value(w);
-        INFO("value of %s is %i", w->name, v);
+        INFO("value of \"%s\" is %i", w->name, v);
     }
-    INFO("Value of \"%s\" is %i", w->name, w->value);
-    free(w_list);
+
+    answer = w->value;
+
+    /* Leaking memory, because fck it */
     return answer;
 }
