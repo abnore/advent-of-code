@@ -49,12 +49,12 @@ void increment(char *s){
     int len = strlen(s);
     ASSERT(len==8, "string to short %i", len);
 
-    int i=LEN-1; 
+    int i=LEN-1;
 
     while(i>=0){
         s[i]++;
         if(s[i]>0x7a){
-            s[i]=0x61; 
+            s[i]=0x61;
         } else {
             break;
         }
