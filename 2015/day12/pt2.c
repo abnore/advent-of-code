@@ -25,7 +25,7 @@ static int parse_string_is_red(char **p) {
 
     (*p)++; /* skip opening quote */
 
-    if ((*p)[0] == 'r' && (*p)[1] == 'e' && (*p)[2] == 'd' && (*p)[3] == '"')
+    if ((*p)[0] == 'r' && (*p)[1] == 'e' && (*p)[2] == 'd')
         is_red = 1;
 
     while (**p && **p != '"')
