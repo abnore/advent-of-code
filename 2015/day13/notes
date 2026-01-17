@@ -1,0 +1,38 @@
+alice bob carol david - +54+83-7+60 +55+41 -2+46
+alice bob david carol
+alice carol bob david
+
+alice carol david bob
+alice david bob carol
+alice david carol bob
+
+0 1 2 3     all
+    3 2
+  2 1 3
+--- mirrors after (n-1)/2
+    3 1
+  3 1 2
+    2 1
+
+
+
+   alice          alice           alice
+bob    david   bob   carol   carol   david
+   carol          david            bob
+
+3 ways....
+
+(4-1)! = 3*2*1/ 2 !! => 3 ways!
+
+Alice would gain 54 happiness units by sitting next to Bob
+Alice would lose 79 happiness units by sitting next to Carol
+Alice would lose 2 happiness units by sitting next to David
+Bob would gain 83 happiness units by sitting next to Alice
+Bob would lose 7 happiness units by sitting next to Carol
+Bob would lose 63 happiness units by sitting next to David
+Carol would lose 62 happiness units by sitting next to Alice
+Carol would gain 60 happiness units by sitting next to Bob
+Carol would gain 55 happiness units by sitting next to David
+David would gain 46 happiness units by sitting next to Alice
+David would lose 7 happiness units by sitting next to Bob
+David would gain 41 happiness units by sitting next to Carol

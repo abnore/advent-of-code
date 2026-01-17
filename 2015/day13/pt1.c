@@ -9,55 +9,66 @@
         if(str[__l-1]=='\n') str[__l-1]=0;\
         if(str[__l-2]=='.')  str[__l-2]=0;\
         }while(0)
+#define first_level_limit(level, n) ((level) == 0 ? ((n) + 1) / 2 : (n))
 
-static hashmap indices={0};
-static const char *names[8]={0};
-static int name_count=0;
-static int happiness[8][8];
-static int seen[8]={0};
-
-static int highest=0;
-
-void rec_perm(int *seen, int idx, int level, int curr_sum){
-
-    seen[idx]=1;
-
-    if (level == name_count-1){
-        curr_sum += happiness[idx][0] + happiness[0][idx];
-
-        DEBUG("level %d, curr_sum = %d", level, curr_sum);
-        if (curr_sum > highest){
-            highest = curr_sum;
-        }
-        goto done;
+static inline int perm(int n){
+    int __n=n;
+    while(--__n){
+        n *=__n;
     }
-
-    for(int i=1; i<name_count; ++i){
-        if(seen[i]) continue;
-
-        int pair = happiness[idx][i] + happiness[i][idx];
-
-        DEBUG("idx %d, level %d - %d", idx, level, pair+curr_sum);
-        rec_perm(seen, i, level+1, pair+curr_sum);
-    }
-done:
-    seen[idx]=0;
+    return n;
 }
 
+int rec_perm(int *leaf_count, int name_count, int *seen,
+             int idx, int level, int happiness[][8])
+{
+    seen[idx]=1;
+    int pair;
 
-int pt1(FILE* fp){
-    int answer=0;
+    if (level == name_count-1){
+        (*leaf_count)++;
+        seen[idx]=0;
+        pair  = happiness[idx][0] + happiness[0][idx];
+        DEBUG("LINE %d - idx %d, level %d - %d",*leaf_count, idx, level, pair);
+        return pair;
+    }
+
+    int best_branch=0;
+
+    // being a cycle, i know the (n-1) is mirrored, and we only have to do half
+    int limit = first_level_limit(level, name_count);
+
+    for(int i=1; i<limit; ++i){
+        if(seen[i]) continue;
+        pair = happiness[idx][i] + happiness[i][idx];
+
+        int temp = pair + rec_perm(leaf_count, name_count, seen, i, level+1, happiness);
+        DEBUG("idx %d, level %d - %d", idx, level, pair);
+
+        if (temp > best_branch) best_branch = temp;
+    }
+    seen[idx]=0;
+
+    return best_branch;
+}
+
+int pt1(FILE* fp)
+{
     char *line=NULL;
     size_t cap=0;
-    ssize_t n;
 
     char first_name[16];
+    int name_count=0;
+    int happiness[8][8];
+    const char *names[8];
 
-    while((n=getline(&line, &cap, fp))>0){
+    hashmap indices={0};
+
+    while(getline(&line, &cap, fp)>0){
         strip(line);
         sscanf(line, "%s", first_name);
 
-        if ( hm_contains_key(&indices, first_name))
+        if (hm_contains_key(&indices, first_name))
                 continue;
 
         hm_put(&indices, first_name, name_count);
@@ -66,18 +77,17 @@ int pt1(FILE* fp){
     }
     rewind(fp);
 
-    while((n=getline(&line, &cap, fp))>0){
+    while(getline(&line, &cap, fp)>0){
         strip(line);
 
         char last_name[16];
-        char g_or_l[4];
+        char gain_or_lose[4];
         int value;
 
         sscanf(line, "%s would %s %i happiness units by sitting next to %s.\n",
-                first_name, g_or_l, &value, last_name);
+                first_name, gain_or_lose, &value, last_name);
 
-        int sign = match(g_or_l, "lose")? -1 : 1;
-        int s_val = sign*value;
+        int s_val = value * (*gain_or_lose=='l'? -1 : 1);
         int i1 = hm_get(&indices, first_name);
         int i2 = hm_get(&indices, last_name);
 
@@ -85,11 +95,11 @@ int pt1(FILE* fp){
         TRACE("%s and %s : %d", first_name, last_name,s_val);
     }
 
-    for(int i = 0; i <name_count; ++i){
-       printf("%s:%lu\n", names[i], hm_get(&indices, names[i]));
-    }
 
-    rec_perm(seen, 0, 0, 0);
+    int seen[8]={1};
+    int permutations = perm(name_count);
+    int max = permutations>>1;
+    int curr_line=0;
 
-    return highest;
+    return rec_perm(&curr_line, name_count, seen, 0, 0, happiness);
 }
