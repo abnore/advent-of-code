@@ -1,0 +1,54 @@
+6 opcodes means 3 bits 110, two registers is 1 bit
+register a is 0, b is 1
+hlf 0000000x, therefore 0 and register bit
+tpl 0001000x, therefore 1 ..
+inc 0010000x, therefore 2 ..
+jmp 01000000, therefore 3, last 6 bits are offset
+
+if top bit set we check for 0 or 1, ignore register
+jie 10000000, and the last 6 bits are offset
+jio 11000000, and the last 6 bits are offset
+
+offset is 6 bits:
+0 00000 / first bit is the sign, and the next is the number, so -32/32
+
+Since jmp doesnt take a register and jie and jio always use register 1, we can 
+get away with 6 bits offset, using 1 bit for sign and 2 bits for op code
+
+Otherwise to make offsets work we would need to save a null byte for every
+opcode that didnt use offsets to make jumping possible using program counter.
+Alt. we could jump by reading offsets and calculate while moving backwards or
+forwards, but this would be more logic. 
+
+/*
+   hlf r sets register r to half its current value, then continues with the next instruction.
+   tpl r sets register r to triple its current value, then continues with the next instruction.
+   inc r increments register r, adding 1 to it, then continues with the next instruction.
+   jie r, offset is like jmp, but only jumps if register r is even ("jump if even").
+   jio r, offset is like jmp, but only jumps if register r is 1 ("jump if one", not odd).
+   jmp offset is a jump; it continues with the instruction offset away relative to itself.
+
+   */
+
+// registers
+12 22 4 2 2 2 4
+168421
+ 00000
+-8    01000
+    10111
+    11000
+-7    00111
+    11000
+    11001
+(~n) + 1
+00111
+11001
+
+00100000
+
+jio a, +22
+jio a, +8
+jie a, +4
+jmp +2
+jmp -7
+jmp +19

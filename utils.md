@@ -1,4 +1,5 @@
-# Gathering notes Just gathering notes for the remaining week, so i dont have
+# Gathering notes
+Just gathering notes for the remaining week, so i dont have
 to man-page everything, and reminding me that these functions exist so I dont
 have to reinvent the wheel (sorting algorithm)
 
