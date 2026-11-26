@@ -1,4 +1,4 @@
-CC      = clang
+CC      = clang -g
 LDFLAGS = -lblackbox
 
 SRC = main.c pt1.c pt2.c
@@ -41,5 +41,6 @@ test-all:   ; @$(MAKE) test LOG_LEVELS=ALL
 clean:
 	@echo "Cleaning up/"
 	@rm -f $(BIN)
+	@rm -rf $(OUT).dSYM*
 
-.PHONY: all run run-info run-debug run-fatal clean
+.PHONY: all run run-debug run-all test test-debug test-all clean
