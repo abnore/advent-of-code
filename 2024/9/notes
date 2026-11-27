@@ -29,3 +29,25 @@ to create the intermideate as shown below.
 009981118882777333644.5555.666............
 00998111888277733364465555.66.............
 0099811188827773336446555566..............
+
+
+.... I didnt have to implement this, for some reason  my original algorithm
+was correct, i had just read in the input twice, seperated by a space. 
+My conversion from character literal to int didnt work, because it became
+negative and crashed everything. I thought i ran out of memory, but i was just
+running out of allowed memory! I wouldnt have caught this without LLDB, and the
+fact that i knew we should never have a negative number. 
+
+Now for part 2....
+
+00...111...2...333.44.5555.6666.777.888899
+0099.111...2...333.44.5555.6666.777.8888..
+0099.1117772...333.44.5555.6666.....8888..
+0099.111777244.333....5555.6666.....8888..
+00992111777.44.333....5555.6666.....8888..
+
+Now we skip the ones that doesnt fit, and move all the way down..
+
+Damnit, we did it backwards! I have to to top to bottom, only way it makes sense!
+
+Also, move it excactly once, i need to remember IDs!

@@ -62,12 +62,13 @@ int pt1(FILE* fp){
 
     for(int i=0; i<buf_index;i++){
         count=i;
-        int curr = *(p_start + i);
+        int *p_local = p_start + i;
+        int curr = *p_local;
 
-        if( (p_start+i) >= p_end) break;
+        if( p_local >= p_end) break;
         if (curr != -1) continue;
 
-        swap((p_start+i), p_end);
+        swap(p_local, p_end);
         while(*p_end == -1) p_end--;
 
         // printarr(massive_buf, buf_index);
