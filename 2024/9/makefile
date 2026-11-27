@@ -14,33 +14,17 @@ all: $(BIN)
 
 $(BIN): $(SRC)
 	@$(CC) $^ $(LDFLAGS) -o $@
-	@echo "When testing do "
-	@echo " - make test"
-	@echo " - make test-debug"
-	@echo " - make test-all"
-	@echo "Then when ready to go do"
-	@echo " - make run"
-	@echo " - make run-debug"
-	@echo " - make run-all"
 
 run: $(BIN)
 	@LOG_LEVELS="$(LOG_LEVELS)" ./$(BIN) $(FILE)
 
-# Debug mode = Add the debug flag (which is the same as removing trace)
-run-debug:   ; @$(MAKE) run LOG_LEVELS=-trace
-
-# Show everything
-run-all:   ; @$(MAKE) run LOG_LEVELS=ALL
-
 # Same only with tests
 test : $(BIN)
 	@LOG_LEVELS="$(LOG_LEVELS)" ./$(BIN) $(TEST)
-test-debug:   ; @$(MAKE) test LOG_LEVELS=-trace
-test-all:   ; @$(MAKE) test LOG_LEVELS=ALL
 
 clean:
 	@echo "Cleaning up/"
 	@rm -f $(BIN)
 	@rm -rf $(OUT).dSYM*
 
-.PHONY: all run run-debug run-all test test-debug test-all clean
+.PHONY: all run test clean
